@@ -1,10 +1,9 @@
 import { supabase } from "../config/supabaseClient.js";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import ExcelJS from "exceljs";
+import dotenv from "dotenv";
 
-const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
-const ExcelJS = require('exceljs');
-require('dotenv').config();
-
-async function conversionExcel(buffer) {
+export async function conversionExcel(buffer) {
     if (!buffer || !Buffer.isBuffer(buffer)) {
         throw new Error('Se esperaba un buffer de archivo Excel.');
     }
@@ -54,5 +53,3 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin markdo
         throw new Error(`La respuesta del modelo no es un JSON válido: ${err.message}\nRespuesta cruda: ${raw}`);
     }
 }
-
-module.exports = { conversionExcel };
