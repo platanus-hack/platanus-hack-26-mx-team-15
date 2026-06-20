@@ -32,7 +32,7 @@ export const registro = async (req, res) =>{
     
     if(chispas) throw chispas
 
-    res.json({ok: true, data})
+    res.json({ok: true, usuario})
 
     } catch (err) {
         res.status(500).json({ error: err.message })
