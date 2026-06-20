@@ -13,7 +13,10 @@ export const registro = async (req, res) =>{
         password
     });
 
-    if(errSign) throw errSign
+    if(errSign){
+        console.log("Aqui esta dando el error pedazo de estupido")
+        throw errSign
+    } 
 
     //Insertamos un nuevo usuario papá
     const {data: usuario, err: chispas} = await supabase
