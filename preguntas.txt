@@ -1,0 +1,218 @@
+Formulario ideal V1
+SECCIÓN 1
+Tipo de negocio
+¿Cuál es tu negocio?
+Barbería
+Estética
+Gimnasio
+Restaurante
+Cafetería
+Veterinaria
+Consultorio médico
+Consultorio dental
+Taller mecánico
+Tienda de ropa
+Ferretería
+Papelería
+Farmacia
+Escuela
+Otro
+SECCIÓN 2
+Tamaño
+¿Cuántas personas trabajan en tu negocio?
+Solo yo
+2 a 5
+6 a 20
+21 a 50
+Más de 50
+¿Cuántas sucursales tienes?
+1
+2 a 5
+Más de 5
+SECCIÓN 3
+Operación
+¿Atiendes clientes?
+
+Sí / No
+
+¿Vendes productos?
+
+Sí / No
+
+¿Vendes servicios?
+
+Sí / No
+
+¿Manejas inventario?
+
+Sí / No
+
+¿Tienes empleados?
+
+Sí / No
+
+¿Manejas proveedores?
+
+Sí / No
+
+¿Realizas compras?
+
+Sí / No
+
+SECCIÓN 4
+Problemas a resolver
+¿Qué deseas administrar?
+
+Checkboxes
+
+□ Clientes
+
+□ Ventas
+
+□ Inventario
+
+□ Compras
+
+□ Proveedores
+
+□ Empleados
+
+□ Nómina
+
+□ Citas
+
+□ Reservaciones
+
+□ Membresías
+
+□ Facturación
+
+□ Cobranza
+
+□ Reportes
+
+□ Documentos
+
+□ Otro
+
+SECCIÓN 5
+Flujo de trabajo
+
+Aquí empieza la magia.
+
+Según lo seleccionado aparecen preguntas.
+
+Si marcó CLIENTES
+
+¿Actualmente registras clientes?
+No
+En libreta
+Excel
+Otro sistema
+¿Qué información guardas de tus clientes?
+
+□ Nombre
+
+□ Teléfono
+
+□ Correo
+
+□ Dirección
+
+□ RFC
+
+□ Historial de compras
+
+Si marcó INVENTARIO
+
+¿Qué controlas?
+
+□ Productos
+
+□ Herramientas
+
+□ Materia prima
+
+□ Equipos
+
+¿Deseas alertas por inventario bajo?
+
+Sí / No
+
+Si marcó CITAS
+
+¿Cómo agendas actualmente?
+
+□ WhatsApp
+
+□ Excel
+
+□ Agenda física
+
+□ Otro sistema
+
+¿Deseas recordatorios automáticos?
+
+Sí / No
+
+Si marcó EMPLEADOS
+
+¿Deseas controlar asistencias?
+
+Sí / No
+
+¿Deseas controlar comisiones?
+
+Sí / No
+
+SECCIÓN 6
+Tecnología
+¿Tus empleados usarán computadora?
+
+Sí / No
+
+¿Tus empleados usarán celular?
+
+Sí / No
+
+¿Necesitas acceso remoto?
+
+Sí / No
+
+¿Necesitas diferentes niveles de acceso?
+
+Sí / No
+
+SECCIÓN 7
+Datos existentes
+¿Tienes información que quieras importar?
+Excel
+Google Sheets
+CSV
+Otro sistema
+No
+Sube tus archivos
+
+Drag & Drop
+
+SECCIÓN 8
+Validación final
+
+Aquí el agente ya debería inferir.
+
+Mostrar algo así:
+
+Detectamos que tu negocio requiere:
+
+✓ Gestión de clientes
+✓ Gestión de ventas
+✓ Inventario
+✓ Control de empleados
+
+El sistema tendrá:
+
+✓ 8 pantallas
+✓ 15 tablas
+✓ 4 roles
+
+¿Deseas continuar?
