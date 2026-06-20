@@ -1,6 +1,68 @@
 import { supabase } from "../config/supabaseClient.js";
 
-//RUTAS ENTRENADOR
+//RUTAS Usuario
+
+export const registro = async (req, res) =>{
+    try{
+
+    const {nombre, appat, apmat, fecha_nacimiento, telefono, email, password} = req.body;
+
+    //El que lea esto es un ganador bro.
+    const {data: authSign, err: errSign} = await supabase.auth.signUp({
+        email,
+        password
+    });
+
+    if(errSign) throw errSign
+
+    //Insertamos un nuevo usuario papá
+    const {data: usuario, err: chispas} = await supabase
+        .from("usuario")
+        .insert({
+            id: authSign.user?.id,
+            nombre,
+            appat,
+            apmat,
+            fecha_nacimiento,
+            telefono
+        });
+    
+    if(chispas) throw chispas
+
+    res.json({ok: true, data})
+
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
+}
+
+
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const { data, error } =
+            await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+        if (error) {
+            return res.status(401).json({
+                message: error.message,
+            });
+        }
+
+        return res.status(200).json({
+            user: data.user,
+            session: data.session,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error interno",
+        });
+    }
+};
 
 export const obtenerClientes = async (req, res) => {
 
