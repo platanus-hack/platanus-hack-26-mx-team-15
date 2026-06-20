@@ -467,3 +467,9 @@ export default function LandingPage() {
 }
 
 // Made with Bob
+
+export default function page() {
+    return (
+        <div>Hola</div>
+    )
+}
