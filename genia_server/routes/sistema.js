@@ -2,7 +2,7 @@ import express from 'express';
 
 import {
     conversionExcel
-} from '../controllers/usuario.controller.js';
+} from '../controllers/sistema.controller.js';
 
 import {authMiddleware} from '../auth/middleware.js';
 
