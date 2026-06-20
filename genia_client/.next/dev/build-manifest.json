@@ -3,11 +3,24 @@
     "/_app": []
   },
   "devFiles": [],
-  "polyfillFiles": [],
+  "polyfillFiles": [
+    "static/chunks/1dh9_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
   "lowPriorityFiles": [
     "static/development/_buildManifest.js",
     "static/development/_ssgManifest.js",
     "static/development/_clientMiddlewareManifest.js"
   ],
-  "rootMainFiles": []
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_0xo4fy3._.js",
+    "static/chunks/1dh9_next_dist_compiled_next-devtools_index_1f2r3uj.js",
+    "static/chunks/1dh9_next_dist_compiled_react-dom_1kcs22s._.js",
+    "static/chunks/1dh9_next_dist_compiled_react-server-dom-turbopack_1003fdi._.js",
+    "static/chunks/1dh9_next_dist_compiled_17_b7kn._.js",
+    "static/chunks/1dh9_next_dist_client_1icttpk._.js",
+    "static/chunks/1dh9_next_dist_0dgxkt0._.js",
+    "static/chunks/1dh9_@swc_helpers_cjs_0ck-1tu._.js",
+    "static/chunks/0td__HACKATHONES_platanus_platanus-hack-26-mx-team-15_genia_client_1anvha4._.js",
+    "static/chunks/0h84_HACKATHONES_platanus_platanus-hack-26-mx-team-15_genia_client_129h-3z._.js"
+  ]
 }
