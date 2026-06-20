@@ -167,4 +167,3 @@ export const loginUsuario = async (req, res) => {
     }
 }
 
-// Made with Bob
