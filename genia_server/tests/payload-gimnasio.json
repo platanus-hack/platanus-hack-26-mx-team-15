@@ -1,0 +1,309 @@
+{
+  "dashboard": {
+    "nombre": "Gimnasio PowerFit",
+    "idioma": "es",
+    "moneda": "MXN",
+    "zona_horaria": "America/Mexico_City",
+    "formato_fecha": "DD/MM/YYYY"
+  },
+
+  "estilos": [
+    {
+      "nombre": "Tema PowerFit",
+      "tema": "dark",
+      "color_primario": "#f97316",
+      "color_secundario": "#1e293b",
+      "color_acento": "#22c55e",
+      "fuente": "Inter",
+      "activo": true
+    }
+  ],
+
+  "tablas": [
+    {
+      "nombre": "planes",
+      "etiqueta": "Planes de Membresía",
+      "icono": "dumbbell",
+      "orden": 1,
+      "columnas": [
+        {
+          "nombre": "nombre",
+          "etiqueta": "Nombre del Plan",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": true,
+          "max_length": 100,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 1,
+          "ancho": "full",
+          "input_type": "text",
+          "icono": "tag",
+          "placeholder": "Ej: Premium, Básico, Pro",
+          "clase_css": null
+        },
+        {
+          "nombre": "precio_mensual",
+          "etiqueta": "Precio Mensual",
+          "tipo_dato": "decimal",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": "$ #,##0.00",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 2,
+          "ancho": "half",
+          "input_type": "number",
+          "icono": "dollar-sign",
+          "placeholder": "599.00",
+          "clase_css": null
+        },
+        {
+          "nombre": "duracion_dias",
+          "etiqueta": "Duración (días)",
+          "tipo_dato": "integer",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": ["7", "15", "30", "90", "365"],
+          "multivalor": false,
+          "valor_defecto": "30",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 3,
+          "ancho": "half",
+          "input_type": "select",
+          "icono": "calendar-days",
+          "placeholder": null,
+          "clase_css": null
+        },
+        {
+          "nombre": "activo",
+          "etiqueta": "¿Plan activo?",
+          "tipo_dato": "boolean",
+          "requerido": false,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": "true",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 4,
+          "ancho": "third",
+          "input_type": "switch",
+          "icono": "toggle-left",
+          "placeholder": null,
+          "clase_css": null
+        }
+      ],
+      "filas": [
+        {
+          "orden": 1,
+          "datos": {
+            "nombre": "Plan Básico",
+            "precio_mensual": "299.00",
+            "duracion_dias": "30",
+            "activo": "true"
+          }
+        },
+        {
+          "orden": 2,
+          "datos": {
+            "nombre": "Plan Premium",
+            "precio_mensual": "599.00",
+            "duracion_dias": "30",
+            "activo": "true"
+          }
+        },
+        {
+          "orden": 3,
+          "datos": {
+            "nombre": "Plan Pro Anual",
+            "precio_mensual": "499.00",
+            "duracion_dias": "365",
+            "activo": "true"
+          }
+        }
+      ],
+      "relaciones": []
+    },
+    {
+      "nombre": "clientes",
+      "etiqueta": "Clientes del Gimnasio",
+      "icono": "users",
+      "orden": 2,
+      "columnas": [
+        {
+          "nombre": "nombre_completo",
+          "etiqueta": "Nombre Completo",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": false,
+          "max_length": 150,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 1,
+          "ancho": "full",
+          "input_type": "text",
+          "icono": "user",
+          "placeholder": "Ej: Juan Pérez López",
+          "clase_css": null
+        },
+        {
+          "nombre": "email",
+          "etiqueta": "Correo Electrónico",
+          "tipo_dato": "email",
+          "requerido": true,
+          "unico": true,
+          "max_length": 200,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 2,
+          "ancho": "half",
+          "input_type": "email",
+          "icono": "mail",
+          "placeholder": "cliente@correo.com",
+          "clase_css": null
+        },
+        {
+          "nombre": "telefono",
+          "etiqueta": "Teléfono",
+          "tipo_dato": "phone",
+          "requerido": true,
+          "unico": false,
+          "max_length": 15,
+          "mascara": "(##) ####-####",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": "^[0-9]{10}$",
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 3,
+          "ancho": "half",
+          "input_type": "tel",
+          "icono": "phone",
+          "placeholder": "(55) 1234-5678",
+          "clase_css": null
+        },
+        {
+          "nombre": "fecha_inscripcion",
+          "etiqueta": "Fecha de Inscripción",
+          "tipo_dato": "date",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 4,
+          "ancho": "half",
+          "input_type": "date",
+          "icono": "calendar",
+          "placeholder": null,
+          "clase_css": null
+        },
+        {
+          "nombre": "plan_id",
+          "etiqueta": "Plan de Membresía",
+          "tipo_dato": "uuid",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": "planes",
+          "orden": 5,
+          "ancho": "half",
+          "input_type": "select",
+          "icono": "dumbbell",
+          "placeholder": "Selecciona un plan",
+          "clase_css": null
+        }
+      ],
+      "filas": [
+        {
+          "orden": 1,
+          "datos": {
+            "nombre_completo": "Juan Rodríguez García",
+            "email": "juan.rodriguez@correo.com",
+            "telefono": "5512345678",
+            "fecha_inscripcion": "2025-01-15",
+            "plan_id": null
+          }
+        },
+        {
+          "orden": 2,
+          "datos": {
+            "nombre_completo": "María Fernanda López",
+            "email": "maria.lopez@correo.com",
+            "telefono": "5598765432",
+            "fecha_inscripcion": "2025-03-10",
+            "plan_id": null
+          }
+        },
+        {
+          "orden": 3,
+          "datos": {
+            "nombre_completo": "Carlos Daniel Méndez",
+            "email": "carlos.mendez@correo.com",
+            "telefono": "5545612378",
+            "fecha_inscripcion": "2025-06-01",
+            "plan_id": null
+          }
+        }
+      ],
+      "relaciones": [
+        {
+          "columna_origen": "plan_id",
+          "tabla_destino": "planes",
+          "columna_destino": "id",
+          "tipo": "belongs_to",
+          "nombre_relacion": "plan"
+        }
+      ]
+    }
+  ]
+}
