@@ -177,55 +177,7 @@ sequenceDiagram
     FE-->>User: Muestra la recomendación de ERP personalizada
 ```
 
-### Modelo de Datos Central
-
-```mermaid
-erDiagram
-    COMPANY ||--o{ AREA : tiene
-    AREA ||--o{ PROCESS : contiene
-    COMPANY ||--o{ DOCUMENT : sube
-    COMPANY ||--o{ ERP_PROPOSAL : recibe
-    ERP_PROPOSAL ||--o{ ERP_MODULE : incluye
-    PROCESS ||--o{ DOCUMENT : referencia
-
-    COMPANY {
-        uuid id PK
-        string name
-        string industry
-        string size
-        timestamp created_at
-    }
-    AREA {
-        uuid id PK
-        uuid company_id FK
-        string name
-        string description
-    }
-    PROCESS {
-        uuid id PK
-        uuid area_id FK
-        string name
-        string current_tooling
-    }
-    DOCUMENT {
-        uuid id PK
-        uuid company_id FK
-        string file_url
-        string type
-    }
-    ERP_PROPOSAL {
-        uuid id PK
-        uuid company_id FK
-        jsonb structure
-        timestamp generated_at
-    }
-    ERP_MODULE {
-        uuid id PK
-        uuid proposal_id FK
-        string module_name
-        string justification
-    }
-```
+}
 
 ## Stack Tecnológico
 
@@ -276,42 +228,7 @@ erDiagram
 | Git | Control de versiones. |
 | GitHub | Hosting del repositorio y colaboración en equipo. |
 
-## Estructura del Proyecto
 
-```
-genia-erp-builder/
-├── frontend/                   # Aplicación Next.js (GenIA Wizard)
-│   ├── app/                    # Páginas y layouts del App Router
-│   ├── components/             # Componentes de UI reutilizables
-│   ├── lib/                    # Clientes de API, hooks, utilidades
-│   ├── public/                 # Assets estáticos
-│   ├── styles/                 # Estilos globales y de Tailwind
-│   ├── .env.local.example
-│   └── package.json
-│
-├── backend/                    # API en Express.js (genia_server)
-│   ├── src/
-│   │   ├── controllers/        # Controladores de rutas (p. ej., erpAgentController)
-│   │   ├── routes/             # Definiciones de rutas de Express
-│   │   ├── services/           # Orquestación de IA y lógica de negocio
-│   │   ├── middleware/         # Autenticación, validación, manejo de errores
-│   │   ├── config/             # Cliente de Supabase, configuración de entorno
-│   │   └── server.js           # Punto de entrada de la aplicación
-│   ├── .env.example
-│   └── package.json
-│
-├── database/
-│   └── schema.sql              # Esquema de Supabase / PostgreSQL
-│
-├── docs/
-│   └── architecture.md         # Notas extendidas de arquitectura
-│
-├── project-logo.png
-├── README.md
-└── LICENSE
-```
-
-> Nota: ajusta este árbol para que coincida con la estructura real de tu repositorio si difiere de la mostrada arriba.
 
 ## Instalación
 
@@ -358,8 +275,6 @@ npm install
 | `SUPABASE_ANON_KEY` | Clave anónima/pública usada para operaciones seguras del lado del cliente. |
 | `ANTHROPIC_API_KEY` | API key para Claude AI. |
 | `GOOGLE_GEMINI_API_KEY` | API key para Gemini AI. |
-| `JWT_SECRET` | Secreto usado para firmar los tokens de autenticación. |
-| `CORS_ORIGIN` | Origen permitido para solicitudes cross-origin (URL del frontend). |
 
 ```bash
 # backend/.env.example
@@ -373,8 +288,6 @@ SUPABASE_ANON_KEY=your-supabase-anon-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
 GOOGLE_GEMINI_API_KEY=your-gemini-api-key
 
-JWT_SECRET=your-jwt-secret
-CORS_ORIGIN=http://localhost:3000
 ```
 
 ### Frontend (`frontend/.env.local`)
@@ -382,14 +295,12 @@ CORS_ORIGIN=http://localhost:3000
 | Variable | Descripción |
 |---|---|
 | `NEXT_PUBLIC_API_BASE_URL` | URL base de la API del backend. |
-| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto de Supabase. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública de Supabase usada por el cliente. |
+
 
 ```bash
 # frontend/.env.local.example
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
 ```
 
 > Nunca subas archivos `.env` reales al repositorio. Sube únicamente archivos `.env.example` con valores de marcador de posición.
@@ -398,12 +309,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 ```bash
 # Terminal 1 — iniciar el backend
-cd backend
+cd genia_server
 npm run dev
 # API disponible en http://localhost:4000
 
 # Terminal 2 — iniciar el frontend
-cd frontend
+cd genia_client
 npm run dev
 # App disponible en http://localhost:3000
 ```
@@ -426,11 +337,11 @@ Después de desplegar, actualiza `NEXT_PUBLIC_API_BASE_URL` en Vercel para que a
 |---|---|---|
 | Fase 1 | Wizard guiado de onboarding de empresas | Completado |
 | Fase 1 | Generación de estructura de ERP mediante IA | Completado |
+| Fase 2 | Propuestas de módulos ERP editables y personalizables | Completado |
+| Fase 4 | Dashboard de analítica para métricas de adopción y uso | Completado |
 | Fase 2 | Soporte multi-tenant por workspace | Planeado |
-| Fase 2 | Propuestas de módulos ERP editables y personalizables | Planeado |
 | Fase 3 | Integraciones con plataformas de contabilidad y facturación | Planeado |
 | Fase 3 | Despliegue self-service de instancias ERP generadas | Planeado |
-| Fase 4 | Dashboard de analítica para métricas de adopción y uso | En exploración |
 | Fase 4 | Marketplace de plantillas de módulos ERP de la comunidad | En exploración |
 
 ## Equipo
@@ -452,22 +363,10 @@ GenIA ERP Builder fue construido de punta a punta — frontend, backend, integra
 - **Gestión de esquemas para Postgres gestionado** — Adaptar un esquema relacional para ejecutarlo en el editor SQL de Supabase requirió agregar la extensión `pgcrypto` para la generación de UUIDs, guardas de idempotencia y el uso de transacciones para permitir re-ejecuciones seguras.
 - **Configuración de entorno colaborativa** — Trabajar con un equipo distribuido evidenció la importancia de proteger la configuración del `.env` durante los merges, lo que llevó a un manejo más disciplinado de las variables de entorno y a reducir el drift de configuración.
 
-## Contribuir
-
-Las contribuciones son bienvenidas. Para proponer un cambio:
-
-1. Haz un fork del repositorio.
-2. Crea una rama de feature (`git checkout -b feature/tu-feature`).
-3. Realiza tus cambios con mensajes de commit claros y descriptivos.
-4. Abre un pull request describiendo la motivación y el alcance del cambio.
-
-Para cambios significativos, por favor abre primero un issue para discutirlo antes de implementarlo.
 
 ## Licencia
 
-Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE).
-
-> Agrega un archivo `LICENSE` en la raíz del repositorio con el texto completo de la licencia MIT, o reemplaza esta sección si aplica una licencia distinta.
+Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE)..
 
 ## Agradecimientos
 
