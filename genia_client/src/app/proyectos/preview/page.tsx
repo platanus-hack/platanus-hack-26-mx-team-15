@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Table, Palette, Settings, Download, Eye, Edit } from 'lucide-react';
 
 interface Dashboard {
@@ -76,7 +76,6 @@ interface ERPData {
 
 export default function PreviewPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [erpData, setErpData] = useState<ERPData | null>(null);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);

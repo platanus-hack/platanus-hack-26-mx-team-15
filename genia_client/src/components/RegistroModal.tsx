@@ -88,19 +88,46 @@ export default function RegistroModal({ isOpen, onClose, onSwitchToLogin }: Regi
       }
 
       setSuccess(true);
+
+      // Intentar login automático con las mismas credenciales para obtener el token
+      try {
+        const loginRes = await fetch(`${API_URL}/usuario/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
+
+        if (loginRes.ok) {
+          const loginData = await loginRes.json();
+
+          // Supabase auth devuelve { user, session }
+          const token = loginData.session?.access_token || loginData.token || null;
+          const refreshToken = loginData.session?.refresh_token || null;
+          const userData = loginData.user || loginData.data || null;
+
+          if (token && userData) {
+            localStorage.setItem('token', token);
+            if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+            localStorage.setItem('user', JSON.stringify(userData));
+            // Redirigir a proyectos directamente
+            setTimeout(() => { window.location.href = '/proyectos'; }, 800);
+            return;
+          }
+        }
+      } catch {
+        // Si el auto-login falla, continuar al flujo normal (abrir LoginModal)
+      }
+
+      // Fallback: cerrar y pedir que inicie sesión manualmente
       setTimeout(() => {
         onClose();
+        onSwitchToLogin();
         setSuccess(false);
         setFormData({
-          nombre: '',
-          appat: '',
-          apmat: '',
-          fecha_nacimiento: '',
-          telefono: '',
-          email: '',
-          password: ''
+          nombre: '', appat: '', apmat: '',
+          fecha_nacimiento: '', telefono: '', email: '', password: '',
         });
-      }, 2000);
+      }, 1500);
 
     } catch (err) {
       console.error('Error completo:', err);
@@ -300,7 +327,7 @@ export default function RegistroModal({ isOpen, onClose, onSwitchToLogin }: Regi
             disabled={loading}
             className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Registrando...' : ' Resgistrarse'}
+            {loading ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
       </div>

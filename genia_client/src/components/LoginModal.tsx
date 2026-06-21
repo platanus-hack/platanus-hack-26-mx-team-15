@@ -87,41 +87,43 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       console.log('📦 Datos recibidos:', parsedData);
       
       // El backend puede devolver diferentes estructuras
-      let token = null;
+      let token: string | null = null;
+      let refreshToken: string | null = null;
       let userData = null;
 
-      // Estructura 1: {ok: true, data: {...}, token: "..."}
+      // Estructura 1: {ok: true, data: {...}, token: "..."}  (custom login con mock-token)
       if (parsedData.ok && parsedData.data) {
-        token = parsedData.token;
+        token = parsedData.token || null;
         userData = parsedData.data;
       }
       // Estructura 2: Respuesta de Supabase Auth {user: {...}, session: {...}}
       else if (parsedData.user || parsedData.session) {
-        token = parsedData.session?.access_token || 'mock-token';
+        token = parsedData.session?.access_token || null;
+        refreshToken = parsedData.session?.refresh_token || null;
         userData = parsedData.user;
       }
       // Estructura 3: Error
-      else if (parsedData.error || !parsedData.ok) {
+      else if (parsedData.error || parsedData.message) {
         const errorMsg = parsedData.error || parsedData.message || 'Error al iniciar sesión';
         setError(errorMsg);
         return;
       }
 
-      // Guardar token y datos de usuario en localStorage
-      if (token) {
-        localStorage.setItem('token', token);
-        console.log('✅ Token guardado');
-      }
-      
-      if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        console.log('✅ Usuario guardado:', userData);
-      }
-
-      if (!token || !userData) {
-        setError('No se recibieron datos de autenticación válidos');
+      if (!token) {
+        setError('No se recibió token de autenticación del servidor');
         return;
       }
+
+      if (!userData) {
+        setError('No se recibieron datos del usuario');
+        return;
+      }
+
+      // Guardar sesión en localStorage
+      localStorage.setItem('token', token);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('✅ Sesión guardada correctamente');
 
       // Cerrar modal y recargar la página para actualizar el estado
       onClose();

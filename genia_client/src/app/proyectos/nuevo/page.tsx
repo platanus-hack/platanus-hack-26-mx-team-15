@@ -13,11 +13,9 @@ import {
   Users,
   Sparkles,
   Building,
-  HelpCircle,
   FileText,
   AlertTriangle,
   Monitor,
-  Phone,
   Unlock,
   Layers,
   ArrowLeft,
@@ -114,6 +112,7 @@ export default function NuevoProyectoPage() {
   const [datosExistentes, setDatosExistentes] = useState<{
     tiene_datos: string;
     archivos: { nombre: string; tamaño: string; base64?: string }[];
+    conversion?: Record<string, unknown> | null;
   }>({
     tiene_datos: '',
     archivos: []
@@ -580,7 +579,8 @@ export default function NuevoProyectoPage() {
         configuracion: {
           tipo_negocio: tipoFinal, tamano, operacion,
           modulos_deseados: modulosDeseados, flujo, tecnologia,
-          datos_existentes: datosExistentes,
+          // Incluir conversion en el fallback también para consistencia
+          datos_existentes: { ...datosExistentes, conversion: null },
         },
         erp_data: inyeccionPayload,
         created_at: new Date().toISOString(),
@@ -1312,7 +1312,6 @@ export default function NuevoProyectoPage() {
                           >
                             <input
                               type="file"
-                              multiple
                               onChange={(e) => handleFileUpload(e.target.files)}
                               id="file-upload"
                               className="hidden"
