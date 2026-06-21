@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="#">Demo en vivo</a> ·
+  <a href="https://cliente-genia-hq1w2zs6e.vercel.app">Demo en vivo</a> ·
   <a href="#instalación">Instalación</a> ·
   <a href="#visión-general-de-la-arquitectura">Arquitectura</a> ·
   <a href="#roadmap-futuro">Roadmap</a> ·
@@ -40,7 +40,7 @@
 </p>
 
 <p align="center">
-  Frontend: <a href="#">your-deploy-url.vercel.app</a> &nbsp;|&nbsp; API: <a href="#">your-api-url.onrender.com</a>
+  Frontend: <a href="https://cliente-genia-hq1w2zs6e.vercel.app">Cliente de GenIA</a> &nbsp;|&nbsp; API: <a href="https://genia-server.onrender.com">https://genia-server.onrender.com</a>
 </p>
 
 ---
