@@ -1,411 +1,651 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Plus, Search, Sun, Moon, LogOut, RefreshCw, Database, AlertCircle } from 'lucide-react';
+import { listDashboards, type DashboardResumen } from '@/services/dashboard.service';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tipos locales
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Usuario {
   id?: string;
   nombre?: string;
   appat?: string;
   email?: string;
-  user_metadata?: {
-    nombre?: string;
-    appat?: string;
+  user_metadata?: { nombre?: string; appat?: string };
+}
+
+/** Proyecto guardado en localStorage (modo offline / fallback) */
+interface ProyectoLocal {
+  id: string;
+  dashboard_id?: string;
+  nombre_negocio: string;
+  created_at: string;
+  erp_data?: unknown;
+  configuracion?: {
+    tipo_negocio?: string;
+    modulos_deseados?: string[];
+    tamano?: { num_empleados?: string; num_sucursales?: string };
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: icono de módulo como emoji/símbolo
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ICONO_EMOJI: Record<string, string> = {
+  users: '👥', briefcase: '💼', 'shopping-cart': '🛒',
+  package: '📦', calendar: '📅', 'dollar-sign': '💵',
+  'file-text': '📄', truck: '🚚', 'bar-chart': '📊',
+  'credit-card': '💳', star: '⭐', table: '🗂️', default: '🔷',
+};
+
+function getEmoji(icono: string): string {
+  return ICONO_EMOJI[icono] ?? ICONO_EMOJI.default;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componente: tarjeta de dashboard (datos desde API)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DashboardCard({
+  dashboard,
+  isLightMode,
+  onClick,
+}: {
+  dashboard: DashboardResumen;
+  isLightMode: boolean;
+  onClick: () => void;
+}) {
+  const estilo = dashboard.estilos.find(e => e.activo) ?? dashboard.estilos[0];
+  const fecha = new Date(dashboard.created_at).toLocaleDateString('es-MX', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
+
+  return (
+    <div
+      className={`
+        relative border rounded-3xl p-6 backdrop-blur-md
+        hover:shadow-xl transition-all duration-300 flex flex-col justify-between
+        group overflow-hidden cursor-pointer
+        ${isLightMode
+          ? 'bg-white border-purple-500/20 hover:border-purple-500/40 hover:shadow-purple-500/5 text-gray-900'
+          : 'bg-[#11111e]/40 border-purple-500/10 hover:border-purple-500/30 hover:shadow-purple-500/10 text-white'
+        }
+      `}
+      onClick={onClick}
+    >
+      {/* Orbe decorativo */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/5 to-transparent
+        rounded-full blur-2xl pointer-events-none group-hover:scale-150 transition-all duration-700" />
+
+      <div className="space-y-4">
+        {/* Header: nombre + puntos de color */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            {/* Puntos del tema */}
+            {estilo && (
+              <div className="flex items-center gap-1.5 mb-2">
+                {[estilo.color_primario, estilo.color_secundario, estilo.color_acento].map((c, i) => (
+                  <div
+                    key={i}
+                    className="w-3 h-3 rounded-full border border-white/20 flex-shrink-0"
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+                <span className={`text-[11px] ml-1 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {estilo.nombre}
+                </span>
+              </div>
+            )}
+            <h3 className={`text-xl font-bold group-hover:text-purple-500 transition-colors truncate
+              ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
+              {dashboard.nombre}
+            </h3>
+            <div className={`flex gap-3 text-xs ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <span>{dashboard.moneda}</span>
+              <span>{dashboard.idioma.toUpperCase()}</span>
+              <span>{dashboard.zona_horaria.split('/')[1] ?? dashboard.zona_horaria}</span>
+            </div>
+          </div>
+
+          {/* Icono */}
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            ${isLightMode ? 'bg-purple-50 border border-purple-200' : 'bg-purple-500/10 border border-purple-500/20'}`}>
+            <Database className={`w-5 h-5 ${isLightMode ? 'text-purple-600' : 'text-purple-400'}`} />
+          </div>
+        </div>
+
+        {/* Módulos */}
+        {dashboard.tablas.length > 0 && (
+          <div className="space-y-1.5">
+            <p className={`text-xs font-medium ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              Módulos ({dashboard.tablas.length})
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {dashboard.tablas.slice(0, 5).map(t => (
+                <span
+                  key={t.id}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                    ${isLightMode
+                      ? 'bg-gray-100 border border-gray-200 text-gray-700'
+                      : 'bg-white/5 border border-white/5 text-gray-300'
+                    }`}
+                >
+                  <span>{getEmoji(t.icono)}</span>
+                  {t.etiqueta}
+                </span>
+              ))}
+              {dashboard.tablas.length > 5 && (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold
+                  ${isLightMode ? 'bg-purple-100 text-purple-600' : 'text-purple-400 bg-purple-500/10'}`}>
+                  +{dashboard.tablas.length - 5}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {dashboard.tablas.length === 0 && (
+          <p className={`text-sm italic ${isLightMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Sin módulos definidos
+          </p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className={`flex items-center justify-between pt-5 mt-4 border-t text-xs
+        ${isLightMode ? 'border-gray-100 text-gray-400' : 'border-purple-500/5 text-gray-500'}`}>
+        <span>Creado el {fecha}</span>
+        <span className="flex items-center gap-1 font-bold text-purple-400
+          group-hover:text-purple-300 transition-colors uppercase tracking-wider">
+          Gestionar →
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componente: tarjeta de proyecto local (offline / fallback)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ProyectoLocalCard({
+  proyecto,
+  isLightMode,
+  onClick,
+}: {
+  proyecto: ProyectoLocal;
+  isLightMode: boolean;
+  onClick: () => void;
+}) {
+  const fecha = new Date(proyecto.created_at).toLocaleDateString('es-MX', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
+  const config = proyecto.configuracion ?? {};
+  const modulos = config.modulos_deseados ?? [];
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        relative border rounded-3xl p-6 backdrop-blur-md cursor-pointer
+        hover:shadow-xl transition-all duration-300 flex flex-col justify-between
+        group overflow-hidden
+        ${isLightMode
+          ? 'bg-white border-amber-400/20 hover:border-amber-400/40 hover:shadow-amber-400/5 text-gray-900'
+          : 'bg-[#11111e]/40 border-amber-500/10 hover:border-amber-500/30 text-white'
+        }
+      `}
+    >
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/5
+        to-transparent rounded-full blur-xl pointer-events-none" />
+
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold mb-1
+              ${isLightMode ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/20 text-amber-400'}`}>
+              Local
+            </span>
+            <h3 className={`text-xl font-bold truncate group-hover:text-amber-500 transition-colors
+              ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
+              {proyecto.nombre_negocio}
+            </h3>
+            {config.tipo_negocio && (
+              <p className={`text-xs ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {config.tipo_negocio}
+              </p>
+            )}
+          </div>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+            <span className="text-lg">🗂️</span>
+          </div>
+        </div>
+
+        {modulos.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {modulos.slice(0, 4).map(m => (
+              <span key={m} className={`px-2 py-0.5 rounded text-xs font-medium
+                ${isLightMode ? 'bg-gray-100 border border-gray-200 text-gray-600' : 'bg-white/5 border border-white/5 text-gray-300'}`}>
+                {m}
+              </span>
+            ))}
+            {modulos.length > 4 && (
+              <span className={`px-2 py-0.5 rounded text-xs font-bold
+                ${isLightMode ? 'text-amber-600 bg-amber-100' : 'text-amber-400 bg-amber-500/10'}`}>
+                +{modulos.length - 4}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className={`flex items-center justify-between pt-5 mt-4 border-t text-xs
+        ${isLightMode ? 'border-gray-100 text-gray-400' : 'border-amber-500/5 text-gray-500'}`}>
+        <span>Creado el {fecha}</span>
+        <span className="font-bold text-amber-400 group-hover:text-amber-300
+          uppercase tracking-wider transition-colors">
+          Ver preview →
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Página principal
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ProyectosPage() {
   const router = useRouter();
+
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [proyectos, setProyectos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isLightMode, setIsLightMode] = useState(false);
+
+  // Datos del API
+  const [dashboards, setDashboards] = useState<DashboardResumen[]>([]);
+  const [proyectosLocales, setProyectosLocales] = useState<ProyectoLocal[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setIsLightMode(savedTheme === 'light');
-  }, []);
-
-  useEffect(() => {
-    if (isLightMode) {
-      document.body.classList.add('light-mode');
-    } else {
-      document.body.classList.remove('light-mode');
-    }
-  }, [isLightMode]);
-
-  const toggleTheme = () => {
-    const nextTheme = !isLightMode;
-    setIsLightMode(nextTheme);
-    localStorage.setItem('theme', nextTheme ? 'light' : 'dark');
-  };
-
+  // ── Auth + tema ────────────────────────────────────────────────────────────
   useEffect(() => {
     setMounted(true);
-    
-    // Verificar autenticación
+    const savedTheme = localStorage.getItem('theme') ?? 'dark';
+    setIsLightMode(savedTheme === 'light');
+
     const userStr = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    
-    if (!userStr || !token) {
-      router.replace('/');
-      return;
-    }
-
+    if (!userStr || !token) { router.replace('/'); return; }
     try {
-      const user = JSON.parse(userStr);
-      setUsuario(user);
-    } catch (error) {
-      console.error('Error al parsear usuario:', error);
+      setUsuario(JSON.parse(userStr));
+    } catch {
       router.replace('/');
     }
   }, [router]);
 
   useEffect(() => {
-    if (!usuario) return;
+    document.body.classList.toggle('light-mode', isLightMode);
+  }, [isLightMode]);
 
-    const fetchProyectos = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const response = await fetch(`${backendUrl}/proyecto/listar/${usuario.id || usuario.email}`, {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : ''
-          }
-        });
-        const data = await response.json();
+  const toggleTheme = () => {
+    const next = !isLightMode;
+    setIsLightMode(next);
+    localStorage.setItem('theme', next ? 'light' : 'dark');
+  };
 
-        // Cargar también de localStorage
-        const localStr = localStorage.getItem('proyectos') || '[]';
-        const localProyectos = JSON.parse(localStr);
+  // ── Cargar datos ───────────────────────────────────────────────────────────
+  const cargarDatos = useCallback(async () => {
+    setLoading(true);
+    setApiError(null);
 
-        // Combinar datos por ID para evitar duplicados
-        const map = new Map();
-        localProyectos.forEach((p: any) => {
-          if (p.id) map.set(p.id, p);
-        });
-        if (data.ok && Array.isArray(data.data)) {
-          data.data.forEach((p: any) => {
-            if (p.id) map.set(p.id, p);
-          });
-        }
+    // 1. Siempre leer proyectos locales primero (respuesta inmediata)
+    try {
+      const localStr = localStorage.getItem('proyectos') ?? '[]';
+      const locales: ProyectoLocal[] = JSON.parse(localStr);
+      // Solo mostrar como "locales" los que no tienen dashboard_id válido
+      setProyectosLocales(
+        locales.filter(p => !p.dashboard_id || p.id.startsWith('local-'))
+      );
+    } catch { /* no hay proyectos locales */ }
 
-        setProyectos(Array.from(map.values()));
-      } catch (err) {
-        console.error('Error al obtener proyectos:', err);
-        // Fallback a localStorage
-        const localStr = localStorage.getItem('proyectos') || '[]';
-        setProyectos(JSON.parse(localStr));
-      } finally {
-        setLoading(false);
-      }
-    };
+    // 2. Intentar cargar dashboards del API
+    try {
+      const data = await listDashboards();
+      setDashboards(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al cargar dashboards';
+      setApiError(msg);
+      setDashboards([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    fetchProyectos();
-  }, [usuario]);
+  useEffect(() => {
+    if (usuario) cargarDatos();
+  }, [usuario, cargarDatos]);
 
+  // ── Filtro de búsqueda ─────────────────────────────────────────────────────
+  const q = searchQuery.toLowerCase();
+
+  const dashboardsFiltrados = dashboards.filter(d =>
+    d.nombre.toLowerCase().includes(q) ||
+    d.tablas.some(t => t.etiqueta.toLowerCase().includes(q))
+  );
+
+  const localesFiltrados = proyectosLocales.filter(p =>
+    p.nombre_negocio.toLowerCase().includes(q) ||
+    (p.configuracion?.tipo_negocio ?? '').toLowerCase().includes(q)
+  );
+
+  const hayResultados = dashboardsFiltrados.length > 0 || localesFiltrados.length > 0;
+  const hayDatos = dashboards.length > 0 || proyectosLocales.length > 0;
+
+  // ── Handlers de navegación ─────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     router.push('/');
   };
 
-  const handleNuevoProyecto = () => {
-    router.push('/proyectos/nuevo');
+  const handleNuevoProyecto = () => router.push('/proyectos/nuevo');
+
+  const handleGestionarDashboard = (id: string) => router.push(`/proyectos/${id}`);
+
+  const handleGestionarLocal = (proyecto: ProyectoLocal) => {
+    if (proyecto.erp_data) {
+      localStorage.setItem('currentERPData', JSON.stringify(proyecto.erp_data));
+    }
+    router.push('/proyectos/preview');
   };
 
-  if (!mounted || !usuario) {
-    return null;
-  }
+  // ── Render ─────────────────────────────────────────────────────────────────
+  if (!mounted || !usuario) return null;
 
-  const displayName = usuario.nombre || usuario.user_metadata?.nombre || usuario.email?.split('@')[0] || 'Usuario';
+  const displayName =
+    usuario.nombre || usuario.user_metadata?.nombre ||
+    usuario.email?.split('@')[0] || 'Usuario';
+
+  const pageClass = `min-h-screen w-full transition-colors duration-300
+    ${isLightMode
+      ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900'
+      : 'bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]'
+    }`;
+
+  const headerClass = `border-b sticky top-0 z-40 transition-colors duration-300
+    ${isLightMode
+      ? 'border-gray-200 bg-white/80 backdrop-blur-md'
+      : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+    }`;
 
   return (
-    <div className={`min-h-screen w-full transition-colors duration-300 ${
-      isLightMode 
-        ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900' 
-        : 'bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]'
-    }`}>
-      {/* Header */}
-      <header className={`border-b sticky top-0 z-40 transition-colors duration-300 ${
-        isLightMode 
-          ? 'border-gray-200 bg-white/80 backdrop-blur-md' 
-          : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
-      }`}>
+    <div className={pageClass}>
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className={headerClass}>
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-6">
-            {/* Logo y nombre */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              >
-                <Image
-                  src="/new_logo.png"
-                  alt="GenIA Logo"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                />
-                <span className="text-2xl font-bold tracking-wider bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
-                  GenIA
-                </span>
-              </button>
-            </div>
 
-            {/* Right side: Search bar + Theme Toggle + User info */}
-            <div className="flex items-center gap-4">
-              {/* Search bar */}
-              <div className="relative w-80 hidden sm:block">
+            {/* Logo */}
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
+            >
+              <Image src="/new_logo.png" alt="GenIA Logo" width={40} height={40} className="object-contain" />
+              <span className="text-2xl font-bold tracking-wider bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
+                GenIA
+              </span>
+            </button>
+
+            {/* Derecha */}
+            <div className="flex items-center gap-3">
+
+              {/* Búsqueda */}
+              <div className="relative w-72 hidden sm:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="Buscar por nombre o módulo…"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full px-4 py-2 pl-10 border rounded-lg transition-colors ${
-                    isLightMode 
-                      ? 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-purple-500/50' 
-                      : 'bg-[#1a1a2e] border-purple-500/20 text-white placeholder-gray-500 focus:border-purple-500/50'
-                  }`}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className={`w-full pl-9 pr-3 py-2 text-sm border rounded-xl transition-colors focus:outline-none focus:border-purple-500
+                    ${isLightMode
+                      ? 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-400'
+                      : 'bg-[#1a1a2e] border-purple-500/20 text-white placeholder-gray-500'
+                    }`}
                 />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
               </div>
 
-              {/* Theme Toggle Button */}
+              {/* Recargar */}
               <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-xl border transition-all ${
-                  isLightMode 
-                    ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200' 
-                    : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
-                }`}
-                title="Cambiar tema"
+                onClick={cargarDatos}
+                disabled={loading}
+                className={`p-2 rounded-xl border transition-all disabled:opacity-40
+                  ${isLightMode
+                    ? 'border-gray-200 text-gray-500 hover:bg-gray-100'
+                    : 'border-purple-500/20 text-gray-400 hover:bg-white/5'
+                  }`}
+                title="Recargar"
               >
-                {isLightMode ? (
-                  // Moon Icon
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                ) : (
-                  // Sun Icon
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                )}
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
 
-              {/* User info */}
-              <div className="text-right">
-                <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-white'}`}>{displayName}</p>
-              </div>
+              {/* Tema */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl border transition-all
+                  ${isLightMode
+                    ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200'
+                    : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
+                  }`}
+                title="Cambiar tema"
+              >
+                {isLightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              </button>
+
+              {/* Usuario */}
+              <span className={`text-sm font-semibold hidden md:block
+                ${isLightMode ? 'text-gray-800' : 'text-white'}`}>
+                {displayName}
+              </span>
+
+              {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 border-2 border-red-500/50 rounded-full text-red-400 font-semibold tracking-wide hover:bg-red-500/10 transition-all text-sm"
+                className="flex items-center gap-1.5 px-3 py-2 border-2 border-red-500/40 rounded-full
+                  text-red-400 text-sm font-semibold tracking-wide hover:bg-red-500/10 transition-all"
               >
-                Cerrar Sesión
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Salir</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-12">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] space-y-4">
-            <div className="w-12 h-12 border-4 border-t-purple-500 border-purple-500/20 rounded-full animate-spin"></div>
-            <p className="text-gray-400 font-medium">Cargando tus proyectos...</p>
+      {/* ── Contenido principal ─────────────────────────────────────────────── */}
+      <main className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-10">
+
+        {/* ── Loading ─────────────────────────────────────────────────────── */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <div className="w-12 h-12 border-4 border-t-purple-500 border-purple-500/20 rounded-full animate-spin" />
+            <p className={`text-sm font-medium ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
+              Cargando tus proyectos…
+            </p>
           </div>
-        ) : proyectos.length > 0 ? (
+        )}
+
+        {/* ── Contenido cargado ─────────────────────────────────────────────── */}
+        {!loading && (
           <div className="space-y-8 animate-fade-in">
-            {/* Header de listado */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className={`text-4xl font-extrabold tracking-wide ${isLightMode ? 'text-gray-900' : 'text-white'}`}>Mis Proyectos</h1>
-                <p className={`${isLightMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>Gestiona y administra los sistemas ERP generados para tus negocios.</p>
+
+            {/* Banner de error del API (no crítico) */}
+            {apiError && (
+              <div className={`flex items-start gap-3 p-4 rounded-2xl border
+                ${isLightMode
+                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                  : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                }`}>
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold">No se pudo conectar al servidor</p>
+                  <p className="text-xs mt-0.5 opacity-80">
+                    Mostrando solo proyectos guardados localmente. {apiError}
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={handleNuevoProyecto}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold tracking-wide hover:shadow-lg hover:shadow-purple-500/30 transition-all transform hover:scale-[1.02] flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Nuevo Proyecto</span>
-              </button>
-            </div>
+            )}
 
-            {/* Grid de proyectos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proyectos.filter((proy) => {
-                const nameMatch = proy.nombre_negocio?.toLowerCase().includes(searchQuery.toLowerCase());
-                const typeMatch = proy.configuracion?.tipo_negocio?.toLowerCase().includes(searchQuery.toLowerCase());
-                return nameMatch || typeMatch;
-              }).map((proy) => {
-                const config = proy.configuracion || {};
-                const numEmpleados = config.tamano?.num_empleados || 'N/A';
-                const numSucursales = config.tamano?.num_sucursales || 'N/A';
-                const fecha = new Date(proy.created_at).toLocaleDateString('es-MX', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                });
+            {/* ── Estado vacío total ───────────────────────────────────────── */}
+            {!hayDatos && (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+                <div className={`w-32 h-32 rounded-3xl flex items-center justify-center border
+                  ${isLightMode
+                    ? 'bg-purple-50 border-purple-200'
+                    : 'bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border-purple-500/30'
+                  }`}>
+                  <Database className={`w-16 h-16 ${isLightMode ? 'text-purple-500' : 'text-purple-400'}`} />
+                </div>
 
-                return (
-                  <div
-                    key={proy.id}
-                    className={`border rounded-3xl p-6 backdrop-blur-md hover:shadow-xl transition-all flex flex-col justify-between group relative overflow-hidden ${
-                      isLightMode 
-                        ? 'bg-white border-purple-500/20 hover:border-purple-500/40 hover:shadow-purple-500/5 text-gray-900' 
-                        : 'bg-[#11111e]/40 border-purple-500/10 hover:border-purple-500/30 hover:shadow-purple-500/5 text-white'
-                    }`}
+                <div className="text-center space-y-4 max-w-xl">
+                  <h1 className={`text-4xl md:text-5xl font-bold tracking-wide
+                    ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
+                    No tienes proyectos aún
+                  </h1>
+                  <p className={`text-lg leading-relaxed ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                    Crea tu primer sistema ERP personalizado en minutos.
+                    <br />
+                    GenIA se encarga de toda la estructura por ti.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleNuevoProyecto}
+                  className="flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-purple-600 to-pink-600
+                    rounded-2xl text-white font-bold text-xl tracking-wide
+                    hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105"
+                >
+                  <Plus className="w-6 h-6" />
+                  Crear primer proyecto
+                </button>
+
+                <div className="pt-4 grid grid-cols-3 gap-6 text-center">
+                  {[
+                    { icon: '⚡', label: 'Rápido y fácil' },
+                    { icon: '🎨', label: 'Personalizable' },
+                    { icon: '🔒', label: 'Seguro' },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="space-y-2">
+                      <div className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-xl
+                        ${isLightMode ? 'bg-purple-100' : 'bg-purple-500/10'}`}>
+                        {icon}
+                      </div>
+                      <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Lista de proyectos ─────────────────────────────────────── */}
+            {hayDatos && (
+              <>
+                {/* Header de lista */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h1 className={`text-4xl font-extrabold tracking-wide
+                      ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
+                      Mis Proyectos
+                    </h1>
+                    <p className={`mt-1 text-sm ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {dashboards.length + proyectosLocales.length} proyecto{dashboards.length + proyectosLocales.length !== 1 ? 's' : ''} en total
+                      {searchQuery && ` · ${dashboardsFiltrados.length + localesFiltrados.length} coincidencias`}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleNuevoProyecto}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600
+                      rounded-xl text-white font-bold tracking-wide
+                      hover:shadow-lg hover:shadow-purple-500/30 transition-all transform hover:scale-[1.02]"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-all duration-700"></div>
-                    
-                    <div className="space-y-4">
-                      {/* Cabecera de tarjeta */}
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-400">
-                            {config.tipo_negocio || 'ERP personalizado'}
-                          </span>
-                          <h3 className={`text-xl font-bold group-hover:text-purple-500 transition-colors pt-2 ${
-                            isLightMode ? 'text-gray-900' : 'text-white'
-                          }`}>
-                            {proy.nombre_negocio}
-                          </h3>
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
-                      </div>
+                    <Plus className="w-5 h-5" />
+                    Nuevo Proyecto
+                  </button>
+                </div>
 
-                      {/* Métricas de negocio */}
-                      <div className="grid grid-cols-2 gap-4 py-2 border-y border-purple-500/10 text-sm">
-                        <div>
-                          <p className="text-gray-500 text-xs font-medium">Empleados</p>
-                          <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-gray-300'}`}>{numEmpleados}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-xs font-medium">Sucursales</p>
-                          <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-gray-300'}`}>{numSucursales}</p>
-                        </div>
-                      </div>
+                {/* Sin resultados de búsqueda */}
+                {!hayResultados && searchQuery && (
+                  <div className={`text-center py-16 rounded-3xl border
+                    ${isLightMode ? 'border-gray-200 bg-gray-50' : 'border-purple-500/10 bg-[#11111e]/30'}`}>
+                    <Search className={`w-10 h-10 mx-auto mb-3 ${isLightMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <p className={`font-semibold ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                      Sin resultados para &ldquo;{searchQuery}&rdquo;
+                    </p>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="mt-3 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  </div>
+                )}
 
-                      {/* Módulos contratados */}
-                      {config.modulos_deseados && config.modulos_deseados.length > 0 && (
-                        <div className="space-y-1.5">
-                          <p className="text-gray-500 text-xs font-medium">Módulos habilitados</p>
-                          <div className="flex flex-wrap gap-1">
-                            {config.modulos_deseados.slice(0, 4).map((mod: string) => (
-                              <span key={mod} className={`px-2 py-0.5 rounded border text-xs font-medium ${
-                                isLightMode ? 'bg-gray-100 border-gray-200 text-gray-700' : 'bg-white/5 border-white/5 text-gray-300'
-                              }`}>
-                                {mod}
-                              </span>
-                            ))}
-                            {config.modulos_deseados.length > 4 && (
-                              <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-xs text-purple-400 font-bold">
-                                +{config.modulos_deseados.length - 4}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-6 mt-4 border-t border-purple-500/5 text-xs text-gray-500">
-                      <span>Creado el {fecha}</span>
-                      <button className="flex items-center gap-1 font-bold text-purple-400 hover:text-purple-300 transition-colors uppercase tracking-wider">
-                        <span>Gestionar</span>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
+                {/* Grid de dashboards (API) */}
+                {dashboardsFiltrados.length > 0 && (
+                  <div>
+                    {proyectosLocales.length > 0 && (
+                      <h2 className={`text-xs font-bold uppercase tracking-widest mb-4
+                        ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        En la nube
+                      </h2>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {dashboardsFiltrados.map(d => (
+                        <DashboardCard
+                          key={d.id}
+                          dashboard={d}
+                          isLightMode={isLightMode}
+                          onClick={() => handleGestionarDashboard(d.id)}
+                        />
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-fade-in">
-            {/* Empty state */}
-            <div className="text-center space-y-8 max-w-2xl">
-              {/* Icon */}
-              <div className="flex justify-center">
-                <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center border border-purple-500/30">
-                  <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                </div>
-              </div>
+                )}
 
-              {/* Text */}
-              <div className="space-y-4">
-                <h1 className={`text-4xl md:text-5xl font-bold tracking-wide ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
-                  No tienes proyectos aún
-                </h1>
-                <p className={`text-lg leading-relaxed ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
-                  Comienza creando tu primer proyecto ERP personalizado.
-                  <br />
-                  Gestiona tu negocio de manera inteligente y eficiente.
-                </p>
-              </div>
-
-              {/* Button */}
-              <button
-                onClick={handleNuevoProyecto}
-                className="group relative px-12 py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl text-white font-bold text-xl tracking-wide hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105"
-              >
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Nuevo Proyecto</span>
-                </div>
-              </button>
-
-              {/* Additional info */}
-              <div className="pt-8 grid grid-cols-3 gap-6 text-center">
-                <div className="space-y-2">
-                  <div className="w-12 h-12 mx-auto rounded-lg bg-purple-500/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                {/* Grid de proyectos locales (fallback) */}
+                {localesFiltrados.length > 0 && (
+                  <div>
+                    {dashboards.length > 0 && (
+                      <h2 className={`text-xs font-bold uppercase tracking-widest mb-4
+                        ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Guardados localmente
+                      </h2>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {localesFiltrados.map(p => (
+                        <ProyectoLocalCard
+                          key={p.id}
+                          proyecto={p}
+                          isLightMode={isLightMode}
+                          onClick={() => handleGestionarLocal(p)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Rápido y fácil</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="w-12 h-12 mx-auto rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                    </svg>
-                  </div>
-                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Personalizable</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="w-12 h-12 mx-auto rounded-lg bg-pink-500/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Seguro</p>
-                </div>
-              </div>
-            </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </main>

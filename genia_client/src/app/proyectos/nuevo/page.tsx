@@ -287,12 +287,179 @@ export default function NuevoProyectoPage() {
     }
   };
 
+  // ── Mapa de módulos → estructura de tabla base ──────────────────────────────
+  const buildTablaForModulo = (modulo: string, orden: number) => {
+    const col = (
+      nombre: string, etiqueta: string, tipo_dato: string,
+      extra: Record<string, unknown> = {}
+    ) => ({
+      nombre, etiqueta, tipo_dato,
+      requerido: true, unico: false, max_length: null, mascara: null,
+      valores_permitidos: null, multivalor: false, valor_defecto: null,
+      expresion_regular: null, condicion_visible: null,
+      busqueda_habilitada: ['string', 'email', 'phone'].includes(tipo_dato),
+      tabla_busqueda: null, ancho: 'full', input_type: 'text',
+      icono: null, placeholder: null, clase_css: null,
+      ...extra,
+    });
+
+    const TABLAS: Record<string, {
+      nombre: string; etiqueta: string; icono: string;
+      columnas: ReturnType<typeof col>[];
+    }> = {
+      'Clientes': {
+        nombre: 'clientes', etiqueta: 'Clientes', icono: 'users',
+        columnas: [
+          col('nombre_completo', 'Nombre Completo', 'string', { orden: 1, placeholder: 'Ej: Juan Pérez', max_length: 150 }),
+          col('email', 'Correo Electrónico', 'email', { orden: 2, ancho: 'half', input_type: 'email', unico: true, max_length: 200, placeholder: 'cliente@correo.com' }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', placeholder: '(55) 1234-5678', busqueda_habilitada: false }),
+          col('fecha_registro', 'Fecha de Registro', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+        ],
+      },
+      'Ventas': {
+        nombre: 'ventas', etiqueta: 'Ventas', icono: 'shopping-cart',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true, placeholder: 'VTA-001' }),
+          col('fecha', 'Fecha', 'date', { orden: 2, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 3, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 4, ancho: 'half', valores_permitidos: ['Pendiente', 'Pagada', 'Cancelada'], input_type: 'select' }),
+          col('notas', 'Notas', 'text', { orden: 5, ancho: 'full', input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Inventario': {
+        nombre: 'inventario', etiqueta: 'Inventario', icono: 'package',
+        columnas: [
+          col('nombre', 'Producto', 'string', { orden: 1, max_length: 200, placeholder: 'Nombre del producto' }),
+          col('sku', 'SKU', 'string', { orden: 2, ancho: 'third', unico: true, placeholder: 'PROD-001' }),
+          col('precio', 'Precio', 'decimal', { orden: 3, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('stock', 'Stock', 'integer', { orden: 4, ancho: 'third', input_type: 'number', valor_defecto: '0', busqueda_habilitada: false }),
+          col('disponible', 'Disponible', 'boolean', { orden: 5, ancho: 'third', input_type: 'switch', requerido: false, valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Citas': {
+        nombre: 'citas', etiqueta: 'Citas', icono: 'calendar',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150, placeholder: 'Nombre del cliente' }),
+          col('fecha', 'Fecha', 'date', { orden: 2, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('hora', 'Hora', 'string', { orden: 3, ancho: 'half', placeholder: '10:00 AM', busqueda_habilitada: false }),
+          col('servicio', 'Servicio', 'string', { orden: 4, ancho: 'half', placeholder: 'Ej: Corte de cabello' }),
+          col('estatus', 'Estatus', 'string', { orden: 5, ancho: 'half', valores_permitidos: ['Pendiente', 'Confirmada', 'Completada', 'Cancelada'], input_type: 'select' }),
+        ],
+      },
+      'Empleados': {
+        nombre: 'empleados', etiqueta: 'Empleados', icono: 'briefcase',
+        columnas: [
+          col('nombre_completo', 'Nombre Completo', 'string', { orden: 1, max_length: 150, placeholder: 'Ej: Ana García' }),
+          col('puesto', 'Puesto', 'string', { orden: 2, ancho: 'half', placeholder: 'Ej: Vendedor' }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', busqueda_habilitada: false }),
+          col('fecha_ingreso', 'Fecha de Ingreso', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('activo', 'Activo', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', requerido: false, valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Proveedores': {
+        nombre: 'proveedores', etiqueta: 'Proveedores', icono: 'truck',
+        columnas: [
+          col('nombre', 'Empresa / Nombre', 'string', { orden: 1, max_length: 200 }),
+          col('contacto', 'Contacto', 'string', { orden: 2, ancho: 'half', max_length: 150 }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', busqueda_habilitada: false }),
+          col('email', 'Correo', 'email', { orden: 4, ancho: 'half', input_type: 'email', requerido: false }),
+        ],
+      },
+      'Compras': {
+        nombre: 'compras', etiqueta: 'Compras', icono: 'shopping-cart',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true }),
+          col('proveedor', 'Proveedor', 'string', { orden: 2, ancho: 'third' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 4, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 5, ancho: 'half', valores_permitidos: ['Pendiente', 'Recibida', 'Cancelada'], input_type: 'select' }),
+        ],
+      },
+      'Nómina': {
+        nombre: 'nomina', etiqueta: 'Nómina', icono: 'dollar-sign',
+        columnas: [
+          col('empleado', 'Empleado', 'string', { orden: 1 }),
+          col('periodo', 'Período', 'string', { orden: 2, ancho: 'half' }),
+          col('salario', 'Salario', 'decimal', { orden: 3, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('deducciones', 'Deducciones', 'decimal', { orden: 4, ancho: 'half', input_type: 'number', requerido: false, busqueda_habilitada: false }),
+          col('fecha_pago', 'Fecha de Pago', 'date', { orden: 5, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+        ],
+      },
+      'Reservaciones': {
+        nombre: 'reservaciones', etiqueta: 'Reservaciones', icono: 'calendar',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150 }),
+          col('fecha_inicio', 'Fecha Inicio', 'date', { orden: 2, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('fecha_fin', 'Fecha Fin', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 4, ancho: 'half', valores_permitidos: ['Activa', 'Completada', 'Cancelada'], input_type: 'select' }),
+          col('notas', 'Notas', 'text', { orden: 5, input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Membresías': {
+        nombre: 'membresias', etiqueta: 'Membresías', icono: 'star',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150 }),
+          col('plan', 'Plan', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Básico', 'Estándar', 'Premium'], input_type: 'select' }),
+          col('fecha_inicio', 'Inicio', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('fecha_vencimiento', 'Vencimiento', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('activa', 'Activa', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Facturación': {
+        nombre: 'facturas', etiqueta: 'Facturas', icono: 'file-text',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true }),
+          col('cliente', 'Cliente', 'string', { orden: 2, ancho: 'third' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('subtotal', 'Subtotal', 'decimal', { orden: 4, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('iva', 'IVA', 'decimal', { orden: 5, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 6, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+        ],
+      },
+      'Cobranza': {
+        nombre: 'cobranza', etiqueta: 'Cobranza', icono: 'dollar-sign',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1 }),
+          col('concepto', 'Concepto', 'string', { orden: 2, ancho: 'half' }),
+          col('monto', 'Monto', 'decimal', { orden: 3, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('fecha_vencimiento', 'Vencimiento', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('pagado', 'Pagado', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', valor_defecto: 'false', busqueda_habilitada: false }),
+        ],
+      },
+      'Reportes': {
+        nombre: 'reportes', etiqueta: 'Reportes', icono: 'bar-chart',
+        columnas: [
+          col('nombre', 'Nombre del Reporte', 'string', { orden: 1, max_length: 200 }),
+          col('tipo', 'Tipo', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Ventas', 'Inventario', 'Clientes', 'Financiero', 'Otro'], input_type: 'select' }),
+          col('fecha_generado', 'Generado el', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('notas', 'Notas', 'text', { orden: 4, input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Documentos': {
+        nombre: 'documentos', etiqueta: 'Documentos', icono: 'file-text',
+        columnas: [
+          col('nombre', 'Nombre del Documento', 'string', { orden: 1, max_length: 250 }),
+          col('tipo', 'Tipo', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Contrato', 'Factura', 'Manual', 'Reglamento', 'Otro'], input_type: 'select' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('descripcion', 'Descripción', 'text', { orden: 4, input_type: 'textarea', requerido: false }),
+        ],
+      },
+    };
+
+    const base = TABLAS[modulo];
+    if (!base) return null;
+    return { ...base, orden, filas: [], relaciones: [] };
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    const payload = {
-      nombre_negocio: nombreNegocio,
-      tipo_negocio: tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio,
+    const tipoFinal = tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio;
+    const nombreFinal = nombreNegocio || `Mi ${tipoFinal || 'Negocio'}`;
+
+    const formPayload = {
+      nombre_negocio: nombreFinal,
+      tipo_negocio: tipoFinal,
       tamano,
       operacion,
       modulos_deseados: modulosDeseados,
@@ -300,317 +467,113 @@ export default function NuevoProyectoPage() {
         clientes: modulosDeseados.includes('Clientes') ? flujo.clientes : undefined,
         inventario: modulosDeseados.includes('Inventario') ? flujo.inventario : undefined,
         citas: modulosDeseados.includes('Citas') ? flujo.citas : undefined,
-        empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined
+        empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined,
       },
       tecnologia,
       datos_existentes: datosExistentes,
-      base_de_datos_existente: null
+      base_de_datos_existente: null,
+    };
+
+    // Construir tablas dinámicamente según los módulos elegidos
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tablas: any[] = modulosDeseados
+      .map((mod, idx) => buildTablaForModulo(mod, idx + 1))
+      .filter(Boolean);
+
+    // Si no seleccionó módulos mapeados, agregar tabla genérica
+    if (tablas.length === 0) {
+      tablas.push({
+        nombre: 'registros', etiqueta: 'Registros', icono: 'table',
+        orden: 1, filas: [], relaciones: [],
+        columnas: [
+          {
+            nombre: 'descripcion', etiqueta: 'Descripción', tipo_dato: 'string',
+            requerido: true, unico: false, max_length: 300 as number | null, mascara: null,
+            valores_permitidos: null, multivalor: false, valor_defecto: null,
+            expresion_regular: null, condicion_visible: null,
+            busqueda_habilitada: true, tabla_busqueda: null,
+            orden: 1, ancho: 'full', input_type: 'text',
+            icono: null, placeholder: 'Ingresa una descripción' as string | null, clase_css: null,
+          },
+        ],
+      });
+    }
+
+    const inyeccionPayload = {
+      dashboard: {
+        nombre: nombreFinal,
+        idioma: 'es',
+        moneda: 'MXN',
+        zona_horaria: 'America/Mexico_City',
+        formato_fecha: 'DD/MM/YYYY',
+      },
+      estilos: [{
+        nombre: 'Tema Principal',
+        tema: 'dark',
+        color_primario: '#8b5cf6',
+        color_secundario: '#1e293b',
+        color_acento: '#22c55e',
+        fuente: 'Inter',
+        activo: true,
+      }],
+      tablas,
     };
 
     try {
-      // JSON FIJO DE PRUEBA - Simula la respuesta del backend
-      const mockERPData = {
-        "dashboard": {
-          "nombre": nombreNegocio || "Mi Negocio",
-          "idioma": "es",
-          "moneda": "MXN",
-          "zona_horaria": "America/Mexico_City",
-          "formato_fecha": "DD/MM/YYYY"
+      const token = localStorage.getItem('token');
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+      const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
-        "estilos": [
-          {
-            "nombre": "Tema Principal",
-            "tema": "dark",
-            "color_primario": "#8b5cf6",
-            "color_secundario": "#1e293b",
-            "color_acento": "#22c55e",
-            "fuente": "Inter",
-            "activo": true
-          }
-        ],
-        "tablas": [
-          {
-            "nombre": "clientes",
-            "etiqueta": "Clientes",
-            "icono": "users",
-            "orden": 1,
-            "columnas": [
-              {
-                "nombre": "nombre_completo",
-                "etiqueta": "Nombre Completo",
-                "tipo_dato": "string",
-                "requerido": true,
-                "unico": false,
-                "max_length": 150,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": true,
-                "tabla_busqueda": null,
-                "orden": 1,
-                "ancho": "full",
-                "input_type": "text",
-                "icono": "user",
-                "placeholder": "Ej: Juan Pérez",
-                "clase_css": null
-              },
-              {
-                "nombre": "email",
-                "etiqueta": "Correo Electrónico",
-                "tipo_dato": "email",
-                "requerido": true,
-                "unico": true,
-                "max_length": 200,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
-                "condicion_visible": null,
-                "busqueda_habilitada": true,
-                "tabla_busqueda": null,
-                "orden": 2,
-                "ancho": "half",
-                "input_type": "email",
-                "icono": "mail",
-                "placeholder": "cliente@correo.com",
-                "clase_css": null
-              },
-              {
-                "nombre": "telefono",
-                "etiqueta": "Teléfono",
-                "tipo_dato": "phone",
-                "requerido": true,
-                "unico": false,
-                "max_length": 15,
-                "mascara": "(##) ####-####",
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": "^[0-9]{10}$",
-                "condicion_visible": null,
-                "busqueda_habilitada": false,
-                "tabla_busqueda": null,
-                "orden": 3,
-                "ancho": "half",
-                "input_type": "tel",
-                "icono": "phone",
-                "placeholder": "(55) 1234-5678",
-                "clase_css": null
-              },
-              {
-                "nombre": "fecha_registro",
-                "etiqueta": "Fecha de Registro",
-                "tipo_dato": "date",
-                "requerido": true,
-                "unico": false,
-                "max_length": null,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": false,
-                "tabla_busqueda": null,
-                "orden": 4,
-                "ancho": "half",
-                "input_type": "date",
-                "icono": "calendar",
-                "placeholder": null,
-                "clase_css": null
-              }
-            ],
-            "filas": [
-              {
-                "orden": 1,
-                "datos": {
-                  "nombre_completo": "Juan Pérez García",
-                  "email": "juan.perez@correo.com",
-                  "telefono": "5512345678",
-                  "fecha_registro": "2025-01-15"
-                }
-              },
-              {
-                "orden": 2,
-                "datos": {
-                  "nombre_completo": "María López Hernández",
-                  "email": "maria.lopez@correo.com",
-                  "telefono": "5598765432",
-                  "fecha_registro": "2025-02-20"
-                }
-              },
-              {
-                "orden": 3,
-                "datos": {
-                  "nombre_completo": "Carlos Méndez Ruiz",
-                  "email": "carlos.mendez@correo.com",
-                  "telefono": "5545612378",
-                  "fecha_registro": "2025-03-10"
-                }
-              }
-            ],
-            "relaciones": []
-          },
-          {
-            "nombre": "productos",
-            "etiqueta": "Productos",
-            "icono": "package",
-            "orden": 2,
-            "columnas": [
-              {
-                "nombre": "nombre",
-                "etiqueta": "Nombre del Producto",
-                "tipo_dato": "string",
-                "requerido": true,
-                "unico": true,
-                "max_length": 200,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": true,
-                "tabla_busqueda": null,
-                "orden": 1,
-                "ancho": "full",
-                "input_type": "text",
-                "icono": "shopping-bag",
-                "placeholder": "Ej: Producto Premium",
-                "clase_css": null
-              },
-              {
-                "nombre": "precio",
-                "etiqueta": "Precio",
-                "tipo_dato": "decimal",
-                "requerido": true,
-                "unico": false,
-                "max_length": null,
-                "mascara": "$ #,##0.00",
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": null,
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": false,
-                "tabla_busqueda": null,
-                "orden": 2,
-                "ancho": "third",
-                "input_type": "number",
-                "icono": "dollar-sign",
-                "placeholder": "999.00",
-                "clase_css": null
-              },
-              {
-                "nombre": "stock",
-                "etiqueta": "Stock",
-                "tipo_dato": "integer",
-                "requerido": true,
-                "unico": false,
-                "max_length": null,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": "0",
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": false,
-                "tabla_busqueda": null,
-                "orden": 3,
-                "ancho": "third",
-                "input_type": "number",
-                "icono": "package-check",
-                "placeholder": "50",
-                "clase_css": null
-              },
-              {
-                "nombre": "disponible",
-                "etiqueta": "Disponible",
-                "tipo_dato": "boolean",
-                "requerido": false,
-                "unico": false,
-                "max_length": null,
-                "mascara": null,
-                "valores_permitidos": null,
-                "multivalor": false,
-                "valor_defecto": "true",
-                "expresion_regular": null,
-                "condicion_visible": null,
-                "busqueda_habilitada": false,
-                "tabla_busqueda": null,
-                "orden": 4,
-                "ancho": "third",
-                "input_type": "switch",
-                "icono": "toggle-left",
-                "placeholder": null,
-                "clase_css": null
-              }
-            ],
-            "filas": [
-              {
-                "orden": 1,
-                "datos": {
-                  "nombre": "Producto A",
-                  "precio": "299.00",
-                  "stock": "50",
-                  "disponible": "true"
-                }
-              },
-              {
-                "orden": 2,
-                "datos": {
-                  "nombre": "Producto B",
-                  "precio": "599.00",
-                  "stock": "30",
-                  "disponible": "true"
-                }
-              },
-              {
-                "orden": 3,
-                "datos": {
-                  "nombre": "Producto C",
-                  "precio": "899.00",
-                  "stock": "0",
-                  "disponible": "false"
-                }
-              }
-            ],
-            "relaciones": []
-          }
-        ]
-      };
+        body: JSON.stringify(inyeccionPayload),
+      });
 
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const data = await response.json();
 
-      // Guardar los datos del ERP generado en localStorage para el preview
-      localStorage.setItem('currentERPData', JSON.stringify(mockERPData));
-      
-      // También guardar el proyecto en la lista de proyectos
+      if (data.ok && data.resumen?.dashboard_id) {
+        // ✅ Éxito: redirigir al dashboard operativo
+        const dashboardId = data.resumen.dashboard_id;
+
+        const localProyectosStr = localStorage.getItem('proyectos') || '[]';
+        const localProyectos = JSON.parse(localProyectosStr);
+        localProyectos.push({
+          id: dashboardId,
+          dashboard_id: dashboardId,
+          nombre_negocio: nombreFinal,
+          configuracion: formPayload,
+          created_at: new Date().toISOString(),
+        });
+        localStorage.setItem('proyectos', JSON.stringify(localProyectos));
+
+        setSuccess(true);
+        setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
+      } else {
+        throw new Error(data.error || 'El servidor no devolvió un dashboard_id');
+      }
+    } catch (apiError) {
+      // ⚠️ Fallback: guardar en localStorage y redirigir al preview estático
+      console.warn('API no disponible, usando modo local:', apiError);
+
+      localStorage.setItem('currentERPData', JSON.stringify(inyeccionPayload));
+
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
-      const newProject = {
-        id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: nombreNegocio || mockERPData.dashboard.nombre,
-        configuracion: payload,
-        erp_data: mockERPData,
-        created_at: new Date().toISOString()
-      };
-      localProyectos.push(newProject);
+      const localId = 'local-' + Math.random().toString(36).substring(2, 9);
+      localProyectos.push({
+        id: localId,
+        nombre_negocio: nombreFinal,
+        configuracion: formPayload,
+        erp_data: inyeccionPayload,
+        created_at: new Date().toISOString(),
+      });
       localStorage.setItem('proyectos', JSON.stringify(localProyectos));
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push('/proyectos/preview');
-      }, 1000);
-
-    } catch (error) {
-      console.error('Error al generar el ERP:', error);
-      alert('Hubo un error al generar el ERP. Por favor, intenta de nuevo.');
+      setTimeout(() => router.push('/proyectos/preview'), 1000);
     } finally {
       setIsSubmitting(false);
     }
