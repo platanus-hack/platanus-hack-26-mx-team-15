@@ -68,6 +68,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin markdo
     const raw = contentText.trim().replace(/^```json\s*|```$/g, '').trim();
 
     try {
+        console.log("El JSON es: " + raw)
         return JSON.parse(raw);
     } catch (err) {
         throw new Error(`La respuesta del modelo no es un JSON válido: ${err.message}\nRespuesta cruda: ${raw}`);
