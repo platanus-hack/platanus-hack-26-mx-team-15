@@ -5,6 +5,11 @@
   --foreground: #ededed;
 }
 
+body.light-mode {
+  --background: #f9fafb;
+  --foreground: #111827;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
