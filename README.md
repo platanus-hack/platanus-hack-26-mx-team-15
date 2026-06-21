@@ -1,27 +1,27 @@
 # team-15 Platanus Hack 26: CDMX Project
 
 <p align="center">
-  <img src="./project-logo.png" alt="GenIA ERP Builder Logo" width="200" />
+  <img src="./project-logo.png" alt="Logo de GenIA ERP Builder" width="200" />
 </p>
 
 <h1 align="center">GenIA ERP Builder</h1>
 
 <p align="center">
-  <b>AI-generated, custom-fit ERP systems for small and medium businesses.</b>
+  <b>Sistemas ERP generados por IA, a la medida de pequeñas y medianas empresas.</b>
 </p>
 
 <p align="center">
-  <a href="#">Live Demo</a> ·
-  <a href="#installation">Installation</a> ·
-  <a href="#architecture-overview">Architecture</a> ·
-  <a href="#future-roadmap">Roadmap</a> ·
-  <a href="#team">Team</a>
+  <a href="#">Demo en vivo</a> ·
+  <a href="#instalación">Instalación</a> ·
+  <a href="#visión-general-de-la-arquitectura">Arquitectura</a> ·
+  <a href="#roadmap-futuro">Roadmap</a> ·
+  <a href="#equipo">Equipo</a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platanus_Hack_2026-CDMX-FF6B35?style=for-the-badge" alt="Platanus Hack 2026" />
   <img src="https://img.shields.io/badge/Track-Legacy-6E40C9?style=for-the-badge" alt="Track: Legacy" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License: MIT" />
+  <img src="https://img.shields.io/badge/Licencia-MIT-blue?style=for-the-badge" alt="Licencia: MIT" />
 </p>
 
 <p align="center">
@@ -45,148 +45,148 @@
 
 ---
 
-## Table of Contents
+## Tabla de Contenidos
 
-- [Problem Statement](#problem-statement)
-- [Solution Overview](#solution-overview)
-- [Key Features](#key-features)
-- [Architecture Overview](#architecture-overview)
-- [System Architecture Diagram](#system-architecture-diagram)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Environment Variables](#environment-variables)
-- [Running Locally](#running-locally)
-- [Deployment](#deployment)
-- [Future Roadmap](#future-roadmap)
-- [Team](#team)
-- [Lessons Learned](#lessons-learned)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
+- [Planteamiento del Problema](#planteamiento-del-problema)
+- [Visión General de la Solución](#visión-general-de-la-solución)
+- [Características Principales](#características-principales)
+- [Visión General de la Arquitectura](#visión-general-de-la-arquitectura)
+- [Diagrama de Arquitectura del Sistema](#diagrama-de-arquitectura-del-sistema)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Instalación](#instalación)
+- [Variables de Entorno](#variables-de-entorno)
+- [Ejecución en Local](#ejecución-en-local)
+- [Despliegue](#despliegue)
+- [Roadmap Futuro](#roadmap-futuro)
+- [Equipo](#equipo)
+- [Lecciones Aprendidas](#lecciones-aprendidas)
+- [Contribuir](#contribuir)
+- [Licencia](#licencia)
+- [Agradecimientos](#agradecimientos)
 
 ---
 
-## Problem Statement
+## Planteamiento del Problema
 
-Most small and medium-sized businesses do not run on an ERP. Instead, they operate through a patchwork of spreadsheets, shared documents, messaging threads, and manual processes that were never designed to scale.
+La mayoría de las pequeñas y medianas empresas no operan sobre un ERP. En su lugar, gestionan sus procesos mediante un mosaico de hojas de cálculo, documentos dispersos, hilos de mensajería y procesos manuales que nunca fueron diseñados para escalar.
 
-This happens because traditional ERP implementations are:
+Esto ocurre porque las implementaciones tradicionales de ERP son:
 
-- **Expensive** — licensing and consulting costs are typically out of reach for SMBs.
-- **Slow** — implementations often take months of discovery, configuration, and customization.
-- **Generic** — most platforms force the business to adapt to the software, rather than the other way around.
-- **Complex to scope** — defining the right modules, processes, and data structures requires specialized consultants that SMBs rarely have access to.
+- **Costosas** — las licencias y la consultoría suelen estar fuera del alcance de las PyMEs.
+- **Lentas** — las implementaciones suelen tomar meses de descubrimiento, configuración y personalización.
+- **Genéricas** — la mayoría de las plataformas obligan a la empresa a adaptarse al software, en lugar de lo contrario.
+- **Complejas de definir** — establecer los módulos, procesos y estructuras de datos correctos requiere consultores especializados a los que las PyMEs rara vez tienen acceso.
 
-As a result, businesses keep growing on top of fragile, manual infrastructure, accumulating operational debt that becomes harder to unwind the longer it persists.
+Como resultado, las empresas siguen creciendo sobre una infraestructura manual y frágil, acumulando deuda operativa que se vuelve más difícil de resolver mientras más tiempo pasa.
 
-## Solution Overview
+## Visión General de la Solución
 
-**GenIA ERP Builder** uses AI to remove the discovery and scoping bottleneck that makes ERP adoption slow and expensive.
+**GenIA ERP Builder** utiliza inteligencia artificial para eliminar el cuello de botella de descubrimiento y definición de alcance que hace lenta y costosa la adopción de un ERP.
 
-The platform guides a business owner through a structured onboarding flow that captures the information a consultant would normally gather manually: company profile, organizational areas, operational processes, and existing documentation. This information is then analyzed by an AI pipeline that proposes a tailored ERP structure — modules, entities, and workflows — specific to how that business actually operates.
+La plataforma guía al dueño de la empresa a través de un flujo de onboarding estructurado que recopila la información que normalmente reuniría un consultor: perfil de la empresa, áreas organizacionales, procesos operativos y documentación existente. Esta información es luego analizada por un pipeline de IA que propone una estructura ERP a la medida — módulos, entidades y flujos de trabajo — específica a la forma en que esa empresa realmente opera.
 
-The result is a significant reduction in the time, cost, and complexity typically associated with designing and deploying an ERP system, while keeping a human in the loop to validate and refine the proposal.
+El resultado es una reducción significativa en el tiempo, costo y complejidad típicamente asociados al diseño e implementación de un sistema ERP, manteniendo siempre a una persona en el proceso para validar y refinar la propuesta.
 
-## Key Features
+## Características Principales
 
-| Feature | Description |
+| Característica | Descripción |
 |---|---|
-| Guided onboarding wizard | Step-by-step flow that captures company data, organizational areas, processes, and supporting documents. |
-| AI-driven ERP analysis | Claude AI analyzes business processes and proposes a tailored ERP module structure. |
-| Document understanding | Gemini AI processes uploaded documents to extract relevant operational context. |
-| Personalized ERP proposal | Generates a structured, modular ERP recommendation mapped to the business's actual workflows. |
-| Persistent project state | Company profiles, processes, and generated proposals are stored in Supabase / PostgreSQL. |
-| Modern, responsive UI | Built with Next.js and Tailwind CSS for a fast, accessible onboarding experience. |
+| Wizard de onboarding guiado | Flujo paso a paso que captura datos de la empresa, áreas organizacionales, procesos y documentos de soporte. |
+| Análisis de ERP con IA | Claude AI analiza los procesos del negocio y propone una estructura de módulos ERP a la medida. |
+| Comprensión de documentos | Gemini AI procesa los documentos subidos para extraer contexto operativo relevante. |
+| Propuesta de ERP personalizada | Genera una recomendación de ERP estructurada y modular, mapeada a los flujos de trabajo reales del negocio. |
+| Estado persistente del proyecto | Los perfiles de empresa, procesos y propuestas generadas se almacenan en Supabase / PostgreSQL. |
+| UI moderna y responsiva | Construida con Next.js y Tailwind CSS para una experiencia de onboarding rápida y accesible. |
 
-## Architecture Overview
+## Visión General de la Arquitectura
 
-GenIA ERP Builder follows a clear separation of concerns across four layers:
+GenIA ERP Builder sigue una clara separación de responsabilidades en cuatro capas:
 
-1. **Client Layer** — A Next.js application (the "GenIA Wizard") that guides users through onboarding and renders the generated ERP proposal.
-2. **Application Layer** — An Express.js REST API responsible for authentication, request validation, document handling, and orchestrating the ERP generation workflow.
-3. **AI Orchestration Layer** — A LangChain-based orchestrator that coordinates two specialized models: Claude AI for business process analysis and reasoning, and Gemini AI for document and content processing.
-4. **Data Layer** — Supabase (PostgreSQL) for relational data and authentication, and Supabase Storage for uploaded documents.
+1. **Capa de Cliente** — Una aplicación Next.js (el "GenIA Wizard") que guía a los usuarios durante el onboarding y muestra la propuesta de ERP generada.
+2. **Capa de Aplicación** — Una API REST en Express.js responsable de la autenticación, validación de solicitudes, manejo de documentos y orquestación del flujo de generación del ERP.
+3. **Capa de Orquestación de IA** — Un orquestador basado en LangChain que coordina dos modelos especializados: Claude AI para el análisis y razonamiento de procesos de negocio, y Gemini AI para el procesamiento de documentos y contenido.
+4. **Capa de Datos** — Supabase (PostgreSQL) para datos relacionales y autenticación, y Supabase Storage para los documentos subidos.
 
-This layered design keeps the AI orchestration logic decoupled from the API surface, making it straightforward to add new AI providers, new document types, or new ERP module templates without affecting the rest of the system.
+Este diseño en capas mantiene la lógica de orquestación de IA desacoplada de la superficie de la API, lo que facilita agregar nuevos proveedores de IA, nuevos tipos de documentos o nuevas plantillas de módulos ERP sin afectar el resto del sistema.
 
-## System Architecture Diagram
+## Diagrama de Arquitectura del Sistema
 
 ```mermaid
 flowchart TB
-    subgraph Client["Client Layer"]
-        A["GenIA Wizard — Next.js Frontend"]
+    subgraph Client["Capa de Cliente"]
+        A["GenIA Wizard — Frontend Next.js"]
     end
 
-    subgraph API["Application Layer"]
-        B["Express.js REST API"]
-        C["Authentication Middleware"]
-        D["ERP Generation Engine"]
-        E["Document Processing Service"]
+    subgraph API["Capa de Aplicación"]
+        B["API REST Express.js"]
+        C["Middleware de Autenticación"]
+        D["Motor de Generación de ERP"]
+        E["Servicio de Procesamiento de Documentos"]
     end
 
-    subgraph AI["AI Orchestration Layer"]
-        H["LangChain Orchestrator"]
-        F["Claude AI — Process Analysis & Reasoning"]
-        G["Gemini AI — Document & Content Processing"]
+    subgraph AI["Capa de Orquestación de IA"]
+        H["Orquestador LangChain"]
+        F["Claude AI — Análisis y Razonamiento de Procesos"]
+        G["Gemini AI — Procesamiento de Documentos y Contenido"]
     end
 
-    subgraph Data["Data Layer"]
+    subgraph Data["Capa de Datos"]
         I[("Supabase / PostgreSQL")]
-        J["Supabase Storage — Uploaded Documents"]
+        J["Supabase Storage — Documentos Subidos"]
     end
 
     A -->|HTTPS / REST| B
-    A -->|Auth Token| C
+    A -->|Token de autenticación| C
     B --> C
     C --> D
     B --> E
     D --> H
     H --> F
     H --> G
-    F -->|ERP Recommendation| H
-    G -->|Document Insights| H
+    F -->|Recomendación de ERP| H
+    G -->|Insights del documento| H
     E --> J
-    D -->|Generated ERP Structure| I
-    B -->|Company & Process Data| I
+    D -->|Estructura de ERP generada| I
+    B -->|Datos de empresa y procesos| I
 ```
 
-### Request Flow — ERP Proposal Generation
+### Flujo de Solicitud — Generación de Propuesta de ERP
 
 ```mermaid
 sequenceDiagram
-    actor User as Business Owner
+    actor User as Dueño del Negocio
     participant FE as GenIA Wizard (Next.js)
     participant API as Backend API (Express.js)
-    participant AI as AI Orchestrator (LangChain)
+    participant AI as Orquestador de IA (LangChain)
     participant Claude as Claude AI
     participant Gemini as Gemini AI
     participant DB as Supabase / PostgreSQL
 
-    User->>FE: Complete onboarding wizard
-    FE->>API: POST /proyecto/crear (company, areas, processes, documents)
-    API->>DB: Persist company profile
-    API->>AI: Request ERP structure analysis
-    AI->>Claude: Analyze business processes
-    AI->>Gemini: Extract insights from uploaded documents
-    Claude-->>AI: Recommended ERP module structure
-    Gemini-->>AI: Structured document insights
-    AI-->>API: Consolidated ERP proposal
-    API->>DB: Store generated ERP structure
-    API-->>FE: Return ERP proposal
-    FE-->>User: Display personalized ERP recommendation
+    User->>FE: Completa el wizard de onboarding
+    FE->>API: POST /proyecto/crear (empresa, áreas, procesos, documentos)
+    API->>DB: Persiste el perfil de la empresa
+    API->>AI: Solicita análisis de estructura de ERP
+    AI->>Claude: Analiza los procesos de negocio
+    AI->>Gemini: Extrae insights de los documentos subidos
+    Claude-->>AI: Estructura de módulos ERP recomendada
+    Gemini-->>AI: Insights estructurados del documento
+    AI-->>API: Propuesta de ERP consolidada
+    API->>DB: Almacena la estructura de ERP generada
+    API-->>FE: Retorna la propuesta de ERP
+    FE-->>User: Muestra la recomendación de ERP personalizada
 ```
 
-### Core Data Model
+### Modelo de Datos Central
 
 ```mermaid
 erDiagram
-    COMPANY ||--o{ AREA : has
-    AREA ||--o{ PROCESS : contains
-    COMPANY ||--o{ DOCUMENT : uploads
-    COMPANY ||--o{ ERP_PROPOSAL : receives
-    ERP_PROPOSAL ||--o{ ERP_MODULE : includes
-    PROCESS ||--o{ DOCUMENT : references
+    COMPANY ||--o{ AREA : tiene
+    AREA ||--o{ PROCESS : contiene
+    COMPANY ||--o{ DOCUMENT : sube
+    COMPANY ||--o{ ERP_PROPOSAL : recibe
+    ERP_PROPOSAL ||--o{ ERP_MODULE : incluye
+    PROCESS ||--o{ DOCUMENT : referencia
 
     COMPANY {
         uuid id PK
@@ -227,113 +227,113 @@ erDiagram
     }
 ```
 
-## Tech Stack
+## Stack Tecnológico
 
 ### Frontend
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Next.js | React framework providing routing, SSR/SSG, and performance optimizations. |
-| React | Component-based architecture for the onboarding wizard and dashboard. |
-| TypeScript | Static typing across the client codebase. |
-| Axios | HTTP client for communication with the backend API. |
-| Tailwind CSS | Utility-first styling system for a consistent, responsive UI. |
+| Next.js | Framework de React que provee enrutamiento, SSR/SSG y optimizaciones de rendimiento. |
+| React | Arquitectura basada en componentes para el wizard de onboarding y el dashboard. |
+| TypeScript | Tipado estático en todo el código del cliente. |
+| Axios | Cliente HTTP para la comunicación con la API del backend. |
+| Tailwind CSS | Sistema de estilos utility-first para una UI consistente y responsiva. |
 
 ### Backend
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Node.js | JavaScript runtime powering the API server. |
-| Express.js | REST API framework handling routing and middleware. |
-| TypeScript | Static typing and improved maintainability across services and controllers. |
+| Node.js | Runtime de JavaScript que impulsa el servidor de la API. |
+| Express.js | Framework de API REST que maneja el enrutamiento y los middlewares. |
+| TypeScript | Tipado estático y mejor mantenibilidad en servicios y controladores. |
 
-### Database & Storage
+### Base de Datos y Almacenamiento
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Supabase | Backend-as-a-service: authentication, Postgres database, and file storage. |
-| PostgreSQL | Relational database underlying Supabase, storing companies, processes, and generated ERP structures. |
+| Supabase | Backend-as-a-service: autenticación, base de datos Postgres y almacenamiento de archivos. |
+| PostgreSQL | Base de datos relacional sobre la que corre Supabase, almacenando empresas, procesos y estructuras de ERP generadas. |
 
-### Artificial Intelligence
+### Inteligencia Artificial
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Claude AI (Anthropic) | Core reasoning engine: analyzes business processes and proposes ERP module structures. |
-| Gemini AI (Google) | Processes and extracts structured insights from uploaded business documents. |
-| LangChain | Orchestrates the multi-model AI workflow between Claude AI and Gemini AI. |
+| Claude AI (Anthropic) | Motor de razonamiento principal: analiza los procesos de negocio y propone estructuras de módulos ERP. |
+| Gemini AI (Google) | Procesa y extrae insights estructurados a partir de documentos de negocio subidos. |
+| LangChain | Orquesta el flujo de trabajo multi-modelo entre Claude AI y Gemini AI. |
 
-### Deployment & Infrastructure
+### Despliegue e Infraestructura
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Vercel | Hosting and CI/CD for the Next.js frontend. |
-| Render | Hosting for the Express.js backend service. |
+| Vercel | Hosting y CI/CD para el frontend en Next.js. |
+| Render | Hosting para el servicio backend en Express.js. |
 
-### Version Control
+### Control de Versiones
 
-| Technology | Purpose |
+| Tecnología | Propósito |
 |---|---|
-| Git | Source control. |
-| GitHub | Repository hosting and team collaboration. |
+| Git | Control de versiones. |
+| GitHub | Hosting del repositorio y colaboración en equipo. |
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
 genia-erp-builder/
-├── frontend/                   # Next.js application (GenIA Wizard)
-│   ├── app/                    # App Router pages and layouts
-│   ├── components/             # Reusable UI components
-│   ├── lib/                    # API clients, hooks, utilities
-│   ├── public/                 # Static assets
-│   ├── styles/                 # Global and Tailwind styles
+├── frontend/                   # Aplicación Next.js (GenIA Wizard)
+│   ├── app/                    # Páginas y layouts del App Router
+│   ├── components/             # Componentes de UI reutilizables
+│   ├── lib/                    # Clientes de API, hooks, utilidades
+│   ├── public/                 # Assets estáticos
+│   ├── styles/                 # Estilos globales y de Tailwind
 │   ├── .env.local.example
 │   └── package.json
 │
-├── backend/                    # Express.js API (genia_server)
+├── backend/                    # API en Express.js (genia_server)
 │   ├── src/
-│   │   ├── controllers/        # Route controllers (e.g., erpAgentController)
-│   │   ├── routes/             # Express route definitions
-│   │   ├── services/           # AI orchestration and business logic
-│   │   ├── middleware/         # Auth, validation, error handling
-│   │   ├── config/             # Supabase client, environment setup
-│   │   └── server.js           # Application entry point
+│   │   ├── controllers/        # Controladores de rutas (p. ej., erpAgentController)
+│   │   ├── routes/             # Definiciones de rutas de Express
+│   │   ├── services/           # Orquestación de IA y lógica de negocio
+│   │   ├── middleware/         # Autenticación, validación, manejo de errores
+│   │   ├── config/             # Cliente de Supabase, configuración de entorno
+│   │   └── server.js           # Punto de entrada de la aplicación
 │   ├── .env.example
 │   └── package.json
 │
 ├── database/
-│   └── schema.sql              # Supabase / PostgreSQL schema
+│   └── schema.sql              # Esquema de Supabase / PostgreSQL
 │
 ├── docs/
-│   └── architecture.md         # Extended architecture notes
+│   └── architecture.md         # Notas extendidas de arquitectura
 │
 ├── project-logo.png
 ├── README.md
 └── LICENSE
 ```
 
-> Note: adjust this tree to match your actual repository layout if it diverges from the structure above.
+> Nota: ajusta este árbol para que coincida con la estructura real de tu repositorio si difiere de la mostrada arriba.
 
-## Installation
+## Instalación
 
-### Prerequisites
+### Prerrequisitos
 
-| Requirement | Version |
+| Requisito | Versión |
 |---|---|
-| Node.js | 18.x or higher |
-| npm / yarn / pnpm | Latest stable |
-| Git | Latest stable |
-| Supabase project | Active project with database and storage enabled |
-| Anthropic API key | Required for Claude AI access |
-| Google AI API key | Required for Gemini AI access |
+| Node.js | 18.x o superior |
+| npm / yarn / pnpm | Última versión estable |
+| Git | Última versión estable |
+| Proyecto de Supabase | Proyecto activo con base de datos y storage habilitados |
+| API key de Anthropic | Requerida para el acceso a Claude AI |
+| API key de Google AI | Requerida para el acceso a Gemini AI |
 
-### Clone the repository
+### Clonar el repositorio
 
 ```bash
 git clone https://github.com/<org>/genia-erp-builder.git
 cd genia-erp-builder
 ```
 
-### Install dependencies
+### Instalar dependencias
 
 ```bash
 # Backend
@@ -345,21 +345,21 @@ cd ../frontend
 npm install
 ```
 
-## Environment Variables
+## Variables de Entorno
 
 ### Backend (`backend/.env`)
 
-| Variable | Description |
+| Variable | Descripción |
 |---|---|
-| `PORT` | Port the Express server listens on. |
-| `NODE_ENV` | Runtime environment (`development` / `production`). |
-| `SUPABASE_URL` | URL of your Supabase project. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key used for privileged server-side operations. |
-| `SUPABASE_ANON_KEY` | Anonymous/public key used for client-safe operations. |
-| `ANTHROPIC_API_KEY` | API key for Claude AI. |
-| `GOOGLE_GEMINI_API_KEY` | API key for Gemini AI. |
-| `JWT_SECRET` | Secret used to sign authentication tokens. |
-| `CORS_ORIGIN` | Allowed origin for cross-origin requests (frontend URL). |
+| `PORT` | Puerto en el que escucha el servidor Express. |
+| `NODE_ENV` | Entorno de ejecución (`development` / `production`). |
+| `SUPABASE_URL` | URL de tu proyecto de Supabase. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave de service role usada para operaciones privilegiadas del lado del servidor. |
+| `SUPABASE_ANON_KEY` | Clave anónima/pública usada para operaciones seguras del lado del cliente. |
+| `ANTHROPIC_API_KEY` | API key para Claude AI. |
+| `GOOGLE_GEMINI_API_KEY` | API key para Gemini AI. |
+| `JWT_SECRET` | Secreto usado para firmar los tokens de autenticación. |
+| `CORS_ORIGIN` | Origen permitido para solicitudes cross-origin (URL del frontend). |
 
 ```bash
 # backend/.env.example
@@ -379,11 +379,11 @@ CORS_ORIGIN=http://localhost:3000
 
 ### Frontend (`frontend/.env.local`)
 
-| Variable | Description |
+| Variable | Descripción |
 |---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Base URL of the backend API. |
-| `NEXT_PUBLIC_SUPABASE_URL` | URL of your Supabase project. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase key used by the client. |
+| `NEXT_PUBLIC_API_BASE_URL` | URL base de la API del backend. |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto de Supabase. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública de Supabase usada por el cliente. |
 
 ```bash
 # frontend/.env.local.example
@@ -392,52 +392,52 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-> Never commit real `.env` files. Only commit `.env.example` files with placeholder values.
+> Nunca subas archivos `.env` reales al repositorio. Sube únicamente archivos `.env.example` con valores de marcador de posición.
 
-## Running Locally
+## Ejecución en Local
 
 ```bash
-# Terminal 1 — start the backend
+# Terminal 1 — iniciar el backend
 cd backend
 npm run dev
-# API available at http://localhost:4000
+# API disponible en http://localhost:4000
 
-# Terminal 2 — start the frontend
+# Terminal 2 — iniciar el frontend
 cd frontend
 npm run dev
-# App available at http://localhost:3000
+# App disponible en http://localhost:3000
 ```
 
-Once both services are running, open `http://localhost:3000` to start the onboarding wizard against your local backend.
+Una vez que ambos servicios estén corriendo, abre `http://localhost:3000` para iniciar el wizard de onboarding contra tu backend local.
 
-## Deployment
+## Despliegue
 
-| Component | Platform | Notes |
+| Componente | Plataforma | Notas |
 |---|---|---|
-| Frontend | Vercel | Connect the `frontend` directory, set environment variables in the project dashboard, auto-deploys on push to `main`. |
-| Backend | Render | Deploy `backend` as a Web Service, set the build command (`npm install`) and start command (`npm start`), configure environment variables in the Render dashboard. |
-| Database | Supabase | Managed Postgres instance; run `database/schema.sql` via the Supabase SQL editor to provision tables. |
+| Frontend | Vercel | Conecta el directorio `frontend`, configura las variables de entorno en el dashboard del proyecto, despliega automáticamente con cada push a `main`. |
+| Backend | Render | Despliega `backend` como un Web Service, configura el build command (`npm install`) y el start command (`npm start`), y define las variables de entorno en el dashboard de Render. |
+| Base de Datos | Supabase | Instancia gestionada de Postgres; ejecuta `database/schema.sql` desde el editor SQL de Supabase para crear las tablas. |
 
-After deploying, update `NEXT_PUBLIC_API_BASE_URL` on Vercel to point to the live Render URL, and update `CORS_ORIGIN` on Render to point to the live Vercel URL.
+Después de desplegar, actualiza `NEXT_PUBLIC_API_BASE_URL` en Vercel para que apunte a la URL de Render en producción, y actualiza `CORS_ORIGIN` en Render para que apunte a la URL de Vercel en producción.
 
-## Future Roadmap
+## Roadmap Futuro
 
-| Phase | Feature | Status |
+| Fase | Característica | Estado |
 |---|---|---|
-| Phase 1 | Guided company onboarding wizard | Completed |
-| Phase 1 | AI-driven ERP structure generation | Completed |
-| Phase 2 | Multi-tenant workspace support | Planned |
-| Phase 2 | Editable, customizable ERP module proposals | Planned |
-| Phase 3 | Integrations with accounting and invoicing platforms | Planned |
-| Phase 3 | Self-service deployment of generated ERP instances | Planned |
-| Phase 4 | Analytics dashboard for adoption and usage metrics | Exploring |
-| Phase 4 | Marketplace for community-contributed ERP module templates | Exploring |
+| Fase 1 | Wizard guiado de onboarding de empresas | Completado |
+| Fase 1 | Generación de estructura de ERP mediante IA | Completado |
+| Fase 2 | Soporte multi-tenant por workspace | Planeado |
+| Fase 2 | Propuestas de módulos ERP editables y personalizables | Planeado |
+| Fase 3 | Integraciones con plataformas de contabilidad y facturación | Planeado |
+| Fase 3 | Despliegue self-service de instancias ERP generadas | Planeado |
+| Fase 4 | Dashboard de analítica para métricas de adopción y uso | En exploración |
+| Fase 4 | Marketplace de plantillas de módulos ERP de la comunidad | En exploración |
 
-## Team
+## Equipo
 
-GenIA ERP Builder was built end-to-end — frontend, backend, AI integration, and data modeling — by a five-person team during Platanus Hack 2026 in Mexico City.
+GenIA ERP Builder fue construido de punta a punta — frontend, backend, integración de IA y modelado de datos — por un equipo de cinco personas durante Platanus Hack 2026 en la Ciudad de México.
 
-| Name | GitHub |
+| Nombre | GitHub |
 |---|---|
 | Sanchez Cano Alejandro | [@alejandrotrikitrakatelas33sanchezcano](https://github.com/alejandrotrikitrakatelas33sanchezcano) |
 | Marco André García Carballo | [@ok-andre](https://github.com/ok-andre) |
@@ -445,32 +445,32 @@ GenIA ERP Builder was built end-to-end — frontend, backend, AI integration, an
 | César Arturo Bernal Linares | [@cesarabl73](https://github.com/cesarabl73) |
 | Uriel Natanael Mayorga García | [@tyrael76](https://github.com/tyrael76) |
 
-## Lessons Learned
+## Lecciones Aprendidas
 
-- **ESM module resolution** — Adopting native ES Modules in the backend required explicit `.js` extensions on relative imports and careful sequencing of environment-variable loading to avoid race conditions between `dotenv` initialization and Supabase client creation.
-- **Multi-model AI orchestration** — Coordinating Claude AI and Gemini AI in a single pipeline required disciplined schema design so that outputs from both models could be merged into one consistent ERP proposal.
-- **Schema management for hosted Postgres** — Adapting a relational schema for execution inside Supabase's SQL editor required adding the `pgcrypto` extension for UUID generation, idempotency guards, and transaction wrapping for safe re-runs.
-- **Collaborative environment configuration** — Working across a distributed team surfaced the importance of protecting `.env` configuration during merges, which led to more disciplined environment-variable handling and reduced configuration drift.
+- **Resolución de módulos ESM** — Adoptar ES Modules nativos en el backend requirió usar extensiones `.js` explícitas en los imports relativos, así como una secuencia cuidadosa en la carga de variables de entorno para evitar condiciones de carrera entre la inicialización de `dotenv` y la creación del cliente de Supabase.
+- **Orquestación de IA multi-modelo** — Coordinar Claude AI y Gemini AI en un mismo pipeline requirió un diseño de esquema disciplinado para poder fusionar las salidas de ambos modelos en una sola propuesta de ERP consistente.
+- **Gestión de esquemas para Postgres gestionado** — Adaptar un esquema relacional para ejecutarlo en el editor SQL de Supabase requirió agregar la extensión `pgcrypto` para la generación de UUIDs, guardas de idempotencia y el uso de transacciones para permitir re-ejecuciones seguras.
+- **Configuración de entorno colaborativa** — Trabajar con un equipo distribuido evidenció la importancia de proteger la configuración del `.env` durante los merges, lo que llevó a un manejo más disciplinado de las variables de entorno y a reducir el drift de configuración.
 
-## Contributing
+## Contribuir
 
-Contributions are welcome. To propose a change:
+Las contribuciones son bienvenidas. Para proponer un cambio:
 
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/your-feature`).
-3. Commit your changes with clear, descriptive messages.
-4. Open a pull request describing the motivation and scope of the change.
+1. Haz un fork del repositorio.
+2. Crea una rama de feature (`git checkout -b feature/tu-feature`).
+3. Realiza tus cambios con mensajes de commit claros y descriptivos.
+4. Abre un pull request describiendo la motivación y el alcance del cambio.
 
-Please open an issue first for significant changes so they can be discussed before implementation.
+Para cambios significativos, por favor abre primero un issue para discutirlo antes de implementarlo.
 
-## License
+## Licencia
 
-This project is licensed under the [MIT License](./LICENSE).
+Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE).
 
-> Add a `LICENSE` file at the repository root with the full MIT license text, or replace this section if a different license applies.
+> Agrega un archivo `LICENSE` en la raíz del repositorio con el texto completo de la licencia MIT, o reemplaza esta sección si aplica una licencia distinta.
 
-## Acknowledgments
+## Agradecimientos
 
-- Built during **Platanus Hack 2026**, Mexico City, in the **Legacy** track.
-- Thanks to the Platanus Hack organizing team and mentors for their guidance throughout the event.
-- Powered by Claude AI (Anthropic) and Gemini AI (Google) for the core AI reasoning and document-processing capabilities.
+- Construido durante **Platanus Hack 2026**, en la Ciudad de México, dentro del track **Legacy**.
+- Gracias al equipo organizador y a los mentores de Platanus Hack por su acompañamiento durante el evento.
+- Potenciado por Claude AI (Anthropic) y Gemini AI (Google) para las capacidades centrales de razonamiento e interpretación de documentos.
