@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import ExcelJS from "exceljs";
 
+// Lógica pura: recibe un Buffer, regresa { tablas, sql, explicacion }
 async function procesarExcel(buffer) {
     if (!buffer || !Buffer.isBuffer(buffer)) {
         throw new Error('Se requiere un buffer válido de archivo Excel.');
@@ -70,5 +71,20 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin markdo
         return JSON.parse(raw);
     } catch (err) {
         throw new Error(`La respuesta del modelo no es un JSON válido: ${err.message}\nRespuesta cruda: ${raw}`);
+    }
+}
+
+// Este es el controlador real, el que va en la ruta
+export async function conversionExcel(req, res) {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ ok: false, error: 'No se recibió ningún archivo Excel.' });
+        }
+
+        const resultado = await procesarExcel(req.file.buffer);
+        return res.status(200).json({ ok: true, ...resultado });
+    } catch (err) {
+        console.error('Error en conversionExcel:', err);
+        return res.status(500).json({ ok: false, error: err.message });
     }
 }
