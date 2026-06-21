@@ -93,7 +93,7 @@ export const obtenerProyectos = async (req, res) => {
         }
 
         const { data: proyectos, error } = await supabase
-            .from("proyectos")
+            .from("dashboards")
             .select("*")
             .eq("usuario_id", usuario_id);
 
