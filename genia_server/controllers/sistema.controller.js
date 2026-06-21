@@ -1,14 +1,12 @@
-import { supabase } from "../config/supabaseClient.js";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import ExcelJS from "exceljs";
-import dotenv from "dotenv";
 
-export async function conversionExcel(buffer) {
+// Lógica pura: recibe un Buffer, regresa { tablas, sql, explicacion }
+async function procesarExcel(buffer) {
     if (!buffer || !Buffer.isBuffer(buffer)) {
-        throw new Error('Se esperaba un buffer de archivo Excel.');
+        throw new Error('Se requiere un buffer válido de archivo Excel.');
     }
 
-    // 1. Leer Excel directamente desde el buffer
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
     const worksheet = workbook.worksheets[0];
@@ -22,7 +20,6 @@ export async function conversionExcel(buffer) {
         data += row.values.join(",") + "\n";
     });
 
-    // 3. Llamar al modelo
     const model = new ChatGoogleGenerativeAI({
         modelName: "gemini-2.5-flash",
         apiKey: process.env.GOOGLE_API_KEY,
@@ -43,13 +40,26 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin texto adicional, sin markdo
 }`;
 
     const response = await model.invoke(prompt);
-
-    // 4. Parsear JSON de la respuesta
     const raw = response.content.trim().replace(/^```json\s*|```$/g, '').trim();
 
     try {
         return JSON.parse(raw);
     } catch (err) {
         throw new Error(`La respuesta del modelo no es un JSON válido: ${err.message}\nRespuesta cruda: ${raw}`);
+    }
+}
+
+// Este es el controlador real, el que va en la ruta
+export async function conversionExcel(req, res) {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ ok: false, error: 'No se recibió ningún archivo Excel.' });
+        }
+
+        const resultado = await procesarExcel(req.file.buffer);
+        return res.status(200).json({ ok: true, ...resultado });
+    } catch (err) {
+        console.error('Error en conversionExcel:', err);
+        return res.status(500).json({ ok: false, error: err.message });
     }
 }
