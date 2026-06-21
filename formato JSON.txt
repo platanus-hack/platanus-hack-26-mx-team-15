@@ -1,0 +1,24 @@
+{
+  "tipo_negocio": "Barbería",
+  "tamano": { "num_empleados": "2 a 5", "num_sucursales": "1" },
+  "operacion": {
+    "atiende_clientes": true,
+    "vende_productos": true,
+    "vende_servicios": true,
+    "maneja_inventario": true,
+    "tiene_empleados": true,
+    "maneja_proveedores": false,
+    "realiza_compras": true
+  },
+  "modulos_deseados": ["Clientes", "Ventas", "Inventario", "Citas", "Empleados"],
+  "flujo": {
+    "clientes": { "registro_actual": "En libreta", "info_guardada": ["Nombre", "Telefono", "Historial de compras"] },
+    "inventario": { "controla": ["Productos"], "alertas_bajo_stock": true },
+    "citas": { "metodo_actual": ["WhatsApp", "Agenda fisica"], "recordatorios_automaticos": true },
+    "empleados": { "control_asistencias": true, "control_comisiones": true }
+  },
+  "tecnologia": { "usan_computadora": true, "usan_celular": true, "acceso_remoto": true, "niveles_acceso": true },
+  "datos_existentes": { "tiene_datos": "Excel", "archivos": [] },
+  "base_de_datos_existente": null
+}
+Si hay archivo Excel se agrega al json
