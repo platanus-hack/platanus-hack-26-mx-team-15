@@ -13,11 +13,9 @@ import {
   Users,
   Sparkles,
   Building,
-  HelpCircle,
   FileText,
   AlertTriangle,
   Monitor,
-  Phone,
   Unlock,
   Layers,
   ArrowLeft,
@@ -114,6 +112,7 @@ export default function NuevoProyectoPage() {
   const [datosExistentes, setDatosExistentes] = useState<{
     tiene_datos: string;
     archivos: { nombre: string; tamaño: string; base64?: string }[];
+    conversion?: Record<string, unknown> | null;
   }>({
     tiene_datos: '',
     archivos: []
@@ -292,39 +291,238 @@ export default function NuevoProyectoPage() {
     }
   };
 
+  // ── Mapa de módulos → estructura de tabla base ──────────────────────────────
+  const buildTablaForModulo = (modulo: string, orden: number) => {
+    const col = (
+      nombre: string, etiqueta: string, tipo_dato: string,
+      extra: Record<string, unknown> = {}
+    ) => ({
+      nombre, etiqueta, tipo_dato,
+      requerido: true, unico: false, max_length: null, mascara: null,
+      valores_permitidos: null, multivalor: false, valor_defecto: null,
+      expresion_regular: null, condicion_visible: null,
+      busqueda_habilitada: ['string', 'email', 'phone'].includes(tipo_dato),
+      tabla_busqueda: null, ancho: 'full', input_type: 'text',
+      icono: null, placeholder: null, clase_css: null,
+      ...extra,
+    });
+
+    const TABLAS: Record<string, {
+      nombre: string; etiqueta: string; icono: string;
+      columnas: ReturnType<typeof col>[];
+    }> = {
+      'Clientes': {
+        nombre: 'clientes', etiqueta: 'Clientes', icono: 'users',
+        columnas: [
+          col('nombre_completo', 'Nombre Completo', 'string', { orden: 1, placeholder: 'Ej: Juan Pérez', max_length: 150 }),
+          col('email', 'Correo Electrónico', 'email', { orden: 2, ancho: 'half', input_type: 'email', unico: true, max_length: 200, placeholder: 'cliente@correo.com' }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', placeholder: '(55) 1234-5678', busqueda_habilitada: false }),
+          col('fecha_registro', 'Fecha de Registro', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+        ],
+      },
+      'Ventas': {
+        nombre: 'ventas', etiqueta: 'Ventas', icono: 'shopping-cart',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true, placeholder: 'VTA-001' }),
+          col('fecha', 'Fecha', 'date', { orden: 2, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 3, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 4, ancho: 'half', valores_permitidos: ['Pendiente', 'Pagada', 'Cancelada'], input_type: 'select' }),
+          col('notas', 'Notas', 'text', { orden: 5, ancho: 'full', input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Inventario': {
+        nombre: 'inventario', etiqueta: 'Inventario', icono: 'package',
+        columnas: [
+          col('nombre', 'Producto', 'string', { orden: 1, max_length: 200, placeholder: 'Nombre del producto' }),
+          col('sku', 'SKU', 'string', { orden: 2, ancho: 'third', unico: true, placeholder: 'PROD-001' }),
+          col('precio', 'Precio', 'decimal', { orden: 3, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('stock', 'Stock', 'integer', { orden: 4, ancho: 'third', input_type: 'number', valor_defecto: '0', busqueda_habilitada: false }),
+          col('disponible', 'Disponible', 'boolean', { orden: 5, ancho: 'third', input_type: 'switch', requerido: false, valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Citas': {
+        nombre: 'citas', etiqueta: 'Citas', icono: 'calendar',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150, placeholder: 'Nombre del cliente' }),
+          col('fecha', 'Fecha', 'date', { orden: 2, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('hora', 'Hora', 'string', { orden: 3, ancho: 'half', placeholder: '10:00 AM', busqueda_habilitada: false }),
+          col('servicio', 'Servicio', 'string', { orden: 4, ancho: 'half', placeholder: 'Ej: Corte de cabello' }),
+          col('estatus', 'Estatus', 'string', { orden: 5, ancho: 'half', valores_permitidos: ['Pendiente', 'Confirmada', 'Completada', 'Cancelada'], input_type: 'select' }),
+        ],
+      },
+      'Empleados': {
+        nombre: 'empleados', etiqueta: 'Empleados', icono: 'briefcase',
+        columnas: [
+          col('nombre_completo', 'Nombre Completo', 'string', { orden: 1, max_length: 150, placeholder: 'Ej: Ana García' }),
+          col('puesto', 'Puesto', 'string', { orden: 2, ancho: 'half', placeholder: 'Ej: Vendedor' }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', busqueda_habilitada: false }),
+          col('fecha_ingreso', 'Fecha de Ingreso', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('activo', 'Activo', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', requerido: false, valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Proveedores': {
+        nombre: 'proveedores', etiqueta: 'Proveedores', icono: 'truck',
+        columnas: [
+          col('nombre', 'Empresa / Nombre', 'string', { orden: 1, max_length: 200 }),
+          col('contacto', 'Contacto', 'string', { orden: 2, ancho: 'half', max_length: 150 }),
+          col('telefono', 'Teléfono', 'phone', { orden: 3, ancho: 'half', input_type: 'tel', busqueda_habilitada: false }),
+          col('email', 'Correo', 'email', { orden: 4, ancho: 'half', input_type: 'email', requerido: false }),
+        ],
+      },
+      'Compras': {
+        nombre: 'compras', etiqueta: 'Compras', icono: 'shopping-cart',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true }),
+          col('proveedor', 'Proveedor', 'string', { orden: 2, ancho: 'third' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 4, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 5, ancho: 'half', valores_permitidos: ['Pendiente', 'Recibida', 'Cancelada'], input_type: 'select' }),
+        ],
+      },
+      'Nómina': {
+        nombre: 'nomina', etiqueta: 'Nómina', icono: 'dollar-sign',
+        columnas: [
+          col('empleado', 'Empleado', 'string', { orden: 1 }),
+          col('periodo', 'Período', 'string', { orden: 2, ancho: 'half' }),
+          col('salario', 'Salario', 'decimal', { orden: 3, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('deducciones', 'Deducciones', 'decimal', { orden: 4, ancho: 'half', input_type: 'number', requerido: false, busqueda_habilitada: false }),
+          col('fecha_pago', 'Fecha de Pago', 'date', { orden: 5, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+        ],
+      },
+      'Reservaciones': {
+        nombre: 'reservaciones', etiqueta: 'Reservaciones', icono: 'calendar',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150 }),
+          col('fecha_inicio', 'Fecha Inicio', 'date', { orden: 2, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('fecha_fin', 'Fecha Fin', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('estatus', 'Estatus', 'string', { orden: 4, ancho: 'half', valores_permitidos: ['Activa', 'Completada', 'Cancelada'], input_type: 'select' }),
+          col('notas', 'Notas', 'text', { orden: 5, input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Membresías': {
+        nombre: 'membresias', etiqueta: 'Membresías', icono: 'star',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1, max_length: 150 }),
+          col('plan', 'Plan', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Básico', 'Estándar', 'Premium'], input_type: 'select' }),
+          col('fecha_inicio', 'Inicio', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('fecha_vencimiento', 'Vencimiento', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('activa', 'Activa', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', valor_defecto: 'true', busqueda_habilitada: false }),
+        ],
+      },
+      'Facturación': {
+        nombre: 'facturas', etiqueta: 'Facturas', icono: 'file-text',
+        columnas: [
+          col('folio', 'Folio', 'string', { orden: 1, ancho: 'third', unico: true }),
+          col('cliente', 'Cliente', 'string', { orden: 2, ancho: 'third' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'third', input_type: 'date', busqueda_habilitada: false }),
+          col('subtotal', 'Subtotal', 'decimal', { orden: 4, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('iva', 'IVA', 'decimal', { orden: 5, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+          col('total', 'Total', 'decimal', { orden: 6, ancho: 'third', input_type: 'number', busqueda_habilitada: false }),
+        ],
+      },
+      'Cobranza': {
+        nombre: 'cobranza', etiqueta: 'Cobranza', icono: 'dollar-sign',
+        columnas: [
+          col('cliente', 'Cliente', 'string', { orden: 1 }),
+          col('concepto', 'Concepto', 'string', { orden: 2, ancho: 'half' }),
+          col('monto', 'Monto', 'decimal', { orden: 3, ancho: 'half', input_type: 'number', busqueda_habilitada: false }),
+          col('fecha_vencimiento', 'Vencimiento', 'date', { orden: 4, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('pagado', 'Pagado', 'boolean', { orden: 5, ancho: 'half', input_type: 'switch', valor_defecto: 'false', busqueda_habilitada: false }),
+        ],
+      },
+      'Reportes': {
+        nombre: 'reportes', etiqueta: 'Reportes', icono: 'bar-chart',
+        columnas: [
+          col('nombre', 'Nombre del Reporte', 'string', { orden: 1, max_length: 200 }),
+          col('tipo', 'Tipo', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Ventas', 'Inventario', 'Clientes', 'Financiero', 'Otro'], input_type: 'select' }),
+          col('fecha_generado', 'Generado el', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('notas', 'Notas', 'text', { orden: 4, input_type: 'textarea', requerido: false }),
+        ],
+      },
+      'Documentos': {
+        nombre: 'documentos', etiqueta: 'Documentos', icono: 'file-text',
+        columnas: [
+          col('nombre', 'Nombre del Documento', 'string', { orden: 1, max_length: 250 }),
+          col('tipo', 'Tipo', 'string', { orden: 2, ancho: 'half', valores_permitidos: ['Contrato', 'Factura', 'Manual', 'Reglamento', 'Otro'], input_type: 'select' }),
+          col('fecha', 'Fecha', 'date', { orden: 3, ancho: 'half', input_type: 'date', busqueda_habilitada: false }),
+          col('descripcion', 'Descripción', 'text', { orden: 4, input_type: 'textarea', requerido: false }),
+        ],
+      },
+    };
+
+    const base = TABLAS[modulo];
+    if (!base) return null;
+    return { ...base, orden, filas: [], relaciones: [] };
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
+    const tipoFinal = tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio;
+    const nombreFinal = nombreNegocio || `Mi ${tipoFinal || 'Negocio'}`;
     const token = localStorage.getItem('token');
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-    try {
-      let conversionResultado = null;
+    // Construir tablas dinámicamente según los módulos elegidos
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tablas: any[] = modulosDeseados
+      .map((mod, idx) => buildTablaForModulo(mod, idx + 1))
+      .filter(Boolean);
 
-      // Paso 1: si hay Excel, se procesa primero
+    if (tablas.length === 0) {
+      tablas.push({
+        nombre: 'registros', etiqueta: 'Registros', icono: 'table',
+        orden: 1, filas: [], relaciones: [],
+        columnas: [{
+          nombre: 'descripcion', etiqueta: 'Descripción', tipo_dato: 'string',
+          requerido: true, unico: false, max_length: 300 as number | null, mascara: null,
+          valores_permitidos: null, multivalor: false, valor_defecto: null,
+          expresion_regular: null, condicion_visible: null,
+          busqueda_habilitada: true, tabla_busqueda: null,
+          orden: 1, ancho: 'full', input_type: 'text',
+          icono: null, placeholder: 'Ingresa una descripción' as string | null, clase_css: null,
+        }],
+      });
+    }
+
+    const inyeccionPayload = {
+      dashboard: {
+        nombre: nombreFinal,
+        idioma: 'es',
+        moneda: 'MXN',
+        zona_horaria: 'America/Mexico_City',
+        formato_fecha: 'DD/MM/YYYY',
+      },
+      estilos: [{
+        nombre: 'Tema Principal',
+        tema: 'dark',
+        color_primario: '#8b5cf6',
+        color_secundario: '#1e293b',
+        color_acento: '#22c55e',
+        fuente: 'Inter',
+        activo: true,
+      }],
+      tablas,
+    };
+
+    try {
+      // Paso 1: si hay Excel, procesar primero y adjuntar resultado al payload
+      let conversionResultado = null;
       if (excelFile) {
         const formData = new FormData();
         formData.append('archivo', excelFile);
-
         const excelRes = await fetch(`${backendUrl}/sistema/conversion-Excel`, {
           method: 'POST',
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : ''
-            // sin Content-Type, el navegador arma el boundary del multipart solo
-          },
-          body: formData
+          headers: { 'Authorization': token ? `Bearer ${token}` : '' },
+          body: formData,
         });
-
-        if (!excelRes.ok) {
-          throw new Error('No se pudo procesar el archivo Excel.');
-        }
+        if (!excelRes.ok) throw new Error('No se pudo procesar el archivo Excel.');
         conversionResultado = await excelRes.json();
       }
 
-      // Paso 2: crear el proyecto con el payload + el resultado de la conversión
-      const payload = {
-        nombre_negocio: nombreNegocio,
-        tipo_negocio: tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio,
+      const formPayload = {
+        nombre_negocio: nombreFinal,
+        tipo_negocio: tipoFinal,
         tamano,
         operacion,
         modulos_deseados: modulosDeseados,
@@ -332,54 +530,64 @@ export default function NuevoProyectoPage() {
           clientes: modulosDeseados.includes('Clientes') ? flujo.clientes : undefined,
           inventario: modulosDeseados.includes('Inventario') ? flujo.inventario : undefined,
           citas: modulosDeseados.includes('Citas') ? flujo.citas : undefined,
-          empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined
+          empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined,
         },
         tecnologia,
-        datos_existentes: {
-          ...datosExistentes,
-          conversion: conversionResultado // { tablas, sql, explicacion } o null si no había excel
-        }
+        datos_existentes: { ...datosExistentes, conversion: conversionResultado },
+        base_de_datos_existente: null,
       };
 
-      const proyectoRes = await fetch(`${backendUrl}/proyecto/crear`, {
+      // Paso 2: crear dashboard en Supabase
+      const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': token ? `Bearer ${token}` : '',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(inyeccionPayload),
       });
 
-      const resData = await proyectoRes.json();
+      const data = await response.json();
 
-      const localProyectosStr = localStorage.getItem('proyectos') || '[]';
-      const localProyectos = JSON.parse(localProyectosStr);
-      localProyectos.push(resData.data || {
-        id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: nombreNegocio || `Mi ${payload.tipo_negocio}`,
-        configuracion: payload,
-        created_at: new Date().toISOString()
-      });
-      localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-
-      setSuccess(true);
-      setTimeout(() => router.push('/proyectos'), 3000);
-
-    } catch (error) {
-      console.error('Error al guardar el proyecto en el servidor:', error);
-
+      if (data.ok && data.resumen?.dashboard_id) {
+        // ✅ Éxito: guardar referencia y redirigir al dashboard operativo
+        const dashboardId = data.resumen.dashboard_id;
+        const localProyectosStr = localStorage.getItem('proyectos') || '[]';
+        const localProyectos = JSON.parse(localProyectosStr);
+        localProyectos.push({
+          id: dashboardId,
+          dashboard_id: dashboardId,
+          nombre_negocio: nombreFinal,
+          configuracion: formPayload,
+          created_at: new Date().toISOString(),
+        });
+        localStorage.setItem('proyectos', JSON.stringify(localProyectos));
+        setSuccess(true);
+        setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
+      } else {
+        throw new Error(data.error || 'El servidor no devolvió un dashboard_id');
+      }
+    } catch (apiError) {
+      // ⚠️ Fallback: guardar en localStorage y redirigir al preview estático
+      console.warn('API no disponible, usando modo local:', apiError);
+      localStorage.setItem('currentERPData', JSON.stringify(inyeccionPayload));
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
       localProyectos.push({
         id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: nombreNegocio || `Mi ${tipoNegocio}`,
-        configuracion: { tipoNegocio, tamano, operacion, modulosDeseados, flujo, tecnologia, datosExistentes },
-        created_at: new Date().toISOString()
+        nombre_negocio: nombreFinal,
+        configuracion: {
+          tipo_negocio: tipoFinal, tamano, operacion,
+          modulos_deseados: modulosDeseados, flujo, tecnologia,
+          // Incluir conversion en el fallback también para consistencia
+          datos_existentes: { ...datosExistentes, conversion: null },
+        },
+        erp_data: inyeccionPayload,
+        created_at: new Date().toISOString(),
       });
       localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-
       setSuccess(true);
-      setTimeout(() => router.push('/proyectos'), 3000);
+      setTimeout(() => router.push('/proyectos/preview'), 1000);
     } finally {
       setIsSubmitting(false);
     }
@@ -1104,7 +1312,6 @@ export default function NuevoProyectoPage() {
                           >
                             <input
                               type="file"
-                              multiple
                               onChange={(e) => handleFileUpload(e.target.files)}
                               id="file-upload"
                               className="hidden"
