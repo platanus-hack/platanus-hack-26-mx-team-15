@@ -1,0 +1,596 @@
+{
+  "dashboard": {
+    "nombre": "ElectroStore — Tienda de Electrónicos",
+    "idioma": "es",
+    "moneda": "MXN",
+    "zona_horaria": "America/Mexico_City",
+    "formato_fecha": "DD/MM/YYYY"
+  },
+
+  "estilos": [
+    {
+      "nombre": "Tema ElectroStore",
+      "tema": "light",
+      "color_primario": "#0f172a",
+      "color_secundario": "#3b82f6",
+      "color_acento": "#facc15",
+      "fuente": "Roboto",
+      "activo": true
+    }
+  ],
+
+  "tablas": [
+    {
+      "nombre": "categorias",
+      "etiqueta": "Categorías de Producto",
+      "icono": "folder-tree",
+      "orden": 1,
+      "columnas": [
+        {
+          "nombre": "nombre",
+          "etiqueta": "Nombre de Categoría",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": true,
+          "max_length": 80,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 1,
+          "ancho": "full",
+          "input_type": "text",
+          "icono": "tag",
+          "placeholder": "Ej: Audio, Computadoras, Videojuegos",
+          "clase_css": null
+        },
+        {
+          "nombre": "descripcion",
+          "etiqueta": "Descripción",
+          "tipo_dato": "text",
+          "requerido": false,
+          "unico": false,
+          "max_length": 500,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 2,
+          "ancho": "full",
+          "input_type": "textarea",
+          "icono": "align-left",
+          "placeholder": "Describe esta categoría...",
+          "clase_css": null
+        },
+        {
+          "nombre": "color_etiqueta",
+          "etiqueta": "Color de Etiqueta",
+          "tipo_dato": "color",
+          "requerido": false,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": "#3b82f6",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 3,
+          "ancho": "third",
+          "input_type": "color",
+          "icono": "palette",
+          "placeholder": null,
+          "clase_css": null
+        }
+      ],
+      "filas": [
+        {
+          "orden": 1,
+          "datos": {
+            "nombre": "Audio y Sonido",
+            "descripcion": "Audífonos, bocinas, soundbars y equipos de audio profesional",
+            "color_etiqueta": "#8b5cf6"
+          }
+        },
+        {
+          "orden": 2,
+          "datos": {
+            "nombre": "Computadoras",
+            "descripcion": "Laptops, PC de escritorio, monitores y accesorios",
+            "color_etiqueta": "#3b82f6"
+          }
+        },
+        {
+          "orden": 3,
+          "datos": {
+            "nombre": "Videojuegos",
+            "descripcion": "Consolas, controles, juegos y accesorios gamer",
+            "color_etiqueta": "#22c55e"
+          }
+        }
+      ],
+      "relaciones": []
+    },
+    {
+      "nombre": "productos",
+      "etiqueta": "Productos",
+      "icono": "package",
+      "orden": 2,
+      "columnas": [
+        {
+          "nombre": "sku",
+          "etiqueta": "SKU / Código",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": true,
+          "max_length": 10,
+          "mascara": "AA-####",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": "^[A-Z]{2}[0-9]{4}$",
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 1,
+          "ancho": "third",
+          "input_type": "text",
+          "icono": "barcode",
+          "placeholder": "Ej: AU-0001",
+          "clase_css": null
+        },
+        {
+          "nombre": "nombre",
+          "etiqueta": "Nombre del Producto",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": true,
+          "max_length": 200,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": true,
+          "tabla_busqueda": null,
+          "orden": 2,
+          "ancho": "full",
+          "input_type": "text",
+          "icono": "shopping-bag",
+          "placeholder": "Ej: Audífonos Sony WH-1000XM5",
+          "clase_css": null
+        },
+        {
+          "nombre": "precio",
+          "etiqueta": "Precio de Venta",
+          "tipo_dato": "decimal",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": "$ #,##0.00",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 3,
+          "ancho": "third",
+          "input_type": "number",
+          "icono": "dollar-sign",
+          "placeholder": "2499.00",
+          "clase_css": null
+        },
+        {
+          "nombre": "costo",
+          "etiqueta": "Costo de Proveedor",
+          "tipo_dato": "decimal",
+          "requerido": false,
+          "unico": false,
+          "max_length": null,
+          "mascara": "$ #,##0.00",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 4,
+          "ancho": "third",
+          "input_type": "number",
+          "icono": "receipt",
+          "placeholder": "1800.00",
+          "clase_css": null
+        },
+        {
+          "nombre": "stock",
+          "etiqueta": "Unidades en Inventario",
+          "tipo_dato": "integer",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": "0",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 5,
+          "ancho": "third",
+          "input_type": "number",
+          "icono": "package-check",
+          "placeholder": "50",
+          "clase_css": null
+        },
+        {
+          "nombre": "categoria_id",
+          "etiqueta": "Categoría",
+          "tipo_dato": "uuid",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": "categorias",
+          "orden": 6,
+          "ancho": "half",
+          "input_type": "select",
+          "icono": "folder-tree",
+          "placeholder": "Selecciona categoría",
+          "clase_css": null
+        },
+        {
+          "nombre": "disponible",
+          "etiqueta": "¿Disponible para venta?",
+          "tipo_dato": "boolean",
+          "requerido": false,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": "true",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 7,
+          "ancho": "half",
+          "input_type": "switch",
+          "icono": "toggle-left",
+          "placeholder": null,
+          "clase_css": null
+        },
+        {
+          "nombre": "imagen_url",
+          "etiqueta": "URL de Imagen",
+          "tipo_dato": "url",
+          "requerido": false,
+          "unico": false,
+          "max_length": 500,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 8,
+          "ancho": "full",
+          "input_type": "url",
+          "icono": "image",
+          "placeholder": "https://imagenes.com/producto.jpg",
+          "clase_css": null
+        },
+        {
+          "nombre": "garantia_meses",
+          "etiqueta": "Garantía (meses)",
+          "tipo_dato": "integer",
+          "requerido": false,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": ["0", "3", "6", "12", "24", "36"],
+          "multivalor": false,
+          "valor_defecto": "12",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 9,
+          "ancho": "third",
+          "input_type": "select",
+          "icono": "shield-check",
+          "placeholder": null,
+          "clase_css": null
+        }
+      ],
+      "filas": [
+        {
+          "orden": 1,
+          "datos": {
+            "sku": "AU-0001",
+            "nombre": "Audífonos Sony WH-1000XM5",
+            "precio": "6999.00",
+            "costo": "5200.00",
+            "stock": "15",
+            "categoria_id": null,
+            "disponible": "true",
+            "imagen_url": "https://ejemplo.com/sony-xm5.jpg",
+            "garantia_meses": "12"
+          }
+        },
+        {
+          "orden": 2,
+          "datos": {
+            "sku": "CO-0001",
+            "nombre": "MacBook Pro 16\" M4 Pro",
+            "precio": "54999.00",
+            "costo": "42000.00",
+            "stock": "8",
+            "categoria_id": null,
+            "disponible": "true",
+            "imagen_url": "https://ejemplo.com/macbook-m4.jpg",
+            "garantia_meses": "12"
+          }
+        },
+        {
+          "orden": 3,
+          "datos": {
+            "sku": "VI-0001",
+            "nombre": "PlayStation 5 Digital Edition",
+            "precio": "10499.00",
+            "costo": "8600.00",
+            "stock": "20",
+            "categoria_id": null,
+            "disponible": "true",
+            "imagen_url": "https://ejemplo.com/ps5.jpg",
+            "garantia_meses": "12"
+          }
+        },
+        {
+          "orden": 4,
+          "datos": {
+            "sku": "AU-0002",
+            "nombre": "Bocina JBL Flip 6",
+            "precio": "2499.00",
+            "costo": "1800.00",
+            "stock": "0",
+            "categoria_id": null,
+            "disponible": "false",
+            "imagen_url": "https://ejemplo.com/jbl-flip6.jpg",
+            "garantia_meses": "3"
+          }
+        },
+        {
+          "orden": 5,
+          "datos": {
+            "sku": "CO-0002",
+            "nombre": "Monitor Dell UltraSharp 27\" 4K",
+            "precio": "13999.00",
+            "costo": "10200.00",
+            "stock": "12",
+            "categoria_id": null,
+            "disponible": "true",
+            "imagen_url": "https://ejemplo.com/dell-4k.jpg",
+            "garantia_meses": "36"
+          }
+        }
+      ],
+      "relaciones": [
+        {
+          "columna_origen": "categoria_id",
+          "tabla_destino": "categorias",
+          "columna_destino": "id",
+          "tipo": "belongs_to",
+          "nombre_relacion": "categoria"
+        }
+      ]
+    },
+    {
+      "nombre": "ventas",
+      "etiqueta": "Ventas Realizadas",
+      "icono": "receipt",
+      "orden": 3,
+      "columnas": [
+        {
+          "nombre": "fecha_venta",
+          "etiqueta": "Fecha de Venta",
+          "tipo_dato": "datetime",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 1,
+          "ancho": "half",
+          "input_type": "datetime-local",
+          "icono": "calendar-clock",
+          "placeholder": null,
+          "clase_css": null
+        },
+        {
+          "nombre": "producto_id",
+          "etiqueta": "Producto Vendido",
+          "tipo_dato": "uuid",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": "productos",
+          "orden": 2,
+          "ancho": "half",
+          "input_type": "select",
+          "icono": "package",
+          "placeholder": "Selecciona producto",
+          "clase_css": null
+        },
+        {
+          "nombre": "cantidad",
+          "etiqueta": "Cantidad",
+          "tipo_dato": "integer",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": "1",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 3,
+          "ancho": "third",
+          "input_type": "number",
+          "icono": "hash",
+          "placeholder": "1",
+          "clase_css": null
+        },
+        {
+          "nombre": "total",
+          "etiqueta": "Total de Venta",
+          "tipo_dato": "decimal",
+          "requerido": true,
+          "unico": false,
+          "max_length": null,
+          "mascara": "$ #,##0.00",
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 4,
+          "ancho": "third",
+          "input_type": "number",
+          "icono": "dollar-sign",
+          "placeholder": "6999.00",
+          "clase_css": null
+        },
+        {
+          "nombre": "metodo_pago",
+          "etiqueta": "Método de Pago",
+          "tipo_dato": "string",
+          "requerido": true,
+          "unico": false,
+          "max_length": 30,
+          "mascara": null,
+          "valores_permitidos": ["Efectivo", "Tarjeta de Crédito", "Tarjeta de Débito", "Transferencia", "PayPal"],
+          "multivalor": false,
+          "valor_defecto": "Efectivo",
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 5,
+          "ancho": "third",
+          "input_type": "select",
+          "icono": "credit-card",
+          "placeholder": null,
+          "clase_css": null
+        },
+        {
+          "nombre": "notas",
+          "etiqueta": "Notas de la Venta",
+          "tipo_dato": "text",
+          "requerido": false,
+          "unico": false,
+          "max_length": 1000,
+          "mascara": null,
+          "valores_permitidos": null,
+          "multivalor": false,
+          "valor_defecto": null,
+          "expresion_regular": null,
+          "condicion_visible": null,
+          "busqueda_habilitada": false,
+          "tabla_busqueda": null,
+          "orden": 6,
+          "ancho": "full",
+          "input_type": "textarea",
+          "icono": "sticky-note",
+          "placeholder": "Detalles adicionales de la venta...",
+          "clase_css": null
+        }
+      ],
+      "filas": [
+        {
+          "orden": 1,
+          "datos": {
+            "fecha_venta": "2025-06-15T14:30:00",
+            "producto_id": null,
+            "cantidad": "2",
+            "total": "13998.00",
+            "metodo_pago": "Tarjeta de Crédito",
+            "notas": "Cliente pidió envoltura de regalo"
+          }
+        },
+        {
+          "orden": 2,
+          "datos": {
+            "fecha_venta": "2025-06-16T10:15:00",
+            "producto_id": null,
+            "cantidad": "1",
+            "total": "54999.00",
+            "metodo_pago": "Transferencia",
+            "notas": "Factura a nombre de: TechCorp SA de CV"
+          }
+        },
+        {
+          "orden": 3,
+          "datos": {
+            "fecha_venta": "2025-06-17T16:45:00",
+            "producto_id": null,
+            "cantidad": "1",
+            "total": "10499.00",
+            "metodo_pago": "PayPal",
+            "notas": ""
+          }
+        }
+      ],
+      "relaciones": [
+        {
+          "columna_origen": "producto_id",
+          "tabla_destino": "productos",
+          "columna_destino": "id",
+          "tipo": "belongs_to",
+          "nombre_relacion": "producto"
+        }
+      ]
+    }
+  ]
+}
