@@ -2,81 +2,62 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Check, X, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle, XCircle, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface PendingPreview {
-  preview_html: string | null;
-  pregunta_confirmacion: string;
-  analisis: {
-    tipo_negocio?: string;
-    resumen?: string;
-    modulos_detectados?: string[];
-    roles?: { nombre: string; permisos: string[] }[];
-  };
-  nombre_negocio: string;
+interface Pantalla {
+  nombre: string;
+  mockup_html: string;
 }
 
-interface InyeccionPayload {
-  dashboard: {
-    nombre: string;
-    idioma: string;
-    moneda: string;
-    zona_horaria: string;
-    formato_fecha: string;
+interface ERPPreviewData {
+  data: {
+    analisis: {
+      tipo_negocio: string;
+      resumen: string;
+      modulos_detectados: string[];
+    };
+    pantallas: Pantalla[];
+    pregunta_confirmacion: string;
   };
-  estilos: unknown[];
-  tablas: unknown[];
+  preview_html: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Página principal
+// Componente principal
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function MockupPreviewPage() {
   const router = useRouter();
 
-  const [mounted, setMounted] = useState(false);
-  const [preview, setPreview] = useState<PendingPreview | null>(null);
-  const [payload, setPayload] = useState<InyeccionPayload | null>(null);
+  const [previewData, setPreviewData] = useState<ERPPreviewData | null>(null);
+  const [inyeccionPayload, setInyeccionPayload] = useState<Record<string, unknown> | null>(null);
+  const [pantallaActiva, setPantallaActiva] = useState(0);
+  const [aprobando, setAprobando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isLightMode, setIsLightMode] = useState(false);
 
-  // Estados de aprobación
-  const [aprobando, setAprobando] = useState(false);
-  const [aprobado, setAprobado] = useState(false);
-  const [errorAprobacion, setErrorAprobacion] = useState<string | null>(null);
-
-  // ── Mount + cargar datos de localStorage ──────────────────────────────────
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem('theme') ?? 'dark';
     setIsLightMode(savedTheme === 'light');
 
-    // Verificar auth
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    if (!token || !userStr) {
-      router.replace('/');
+    // Leer datos pendientes desde localStorage
+    const previewStr = localStorage.getItem('pendingERPPreview');
+    const payloadStr = localStorage.getItem('pendingInyeccionPayload');
+
+    if (!previewStr || !payloadStr) {
+      // No hay datos pendientes → redirigir al wizard
+      router.replace('/proyectos/nuevo');
       return;
     }
 
-    // Leer datos pendientes generados por el wizard
     try {
-      const previewStr = localStorage.getItem('pendingERPPreview');
-      const payloadStr = localStorage.getItem('pendingInyeccionPayload');
-
-      if (!previewStr || !payloadStr) {
-        // Si no hay datos pendientes, volver al wizard
-        router.replace('/proyectos/nuevo');
-        return;
-      }
-
-      setPreview(JSON.parse(previewStr));
-      setPayload(JSON.parse(payloadStr));
+      setPreviewData(JSON.parse(previewStr));
+      setInyeccionPayload(JSON.parse(payloadStr));
     } catch {
       router.replace('/proyectos/nuevo');
     }
@@ -86,32 +67,24 @@ export default function MockupPreviewPage() {
     document.body.classList.toggle('light-mode', isLightMode);
   }, [isLightMode]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-
-  const handleRechazar = () => {
-    // Limpiar datos pendientes y volver al wizard
-    localStorage.removeItem('pendingERPPreview');
-    localStorage.removeItem('pendingInyeccionPayload');
-    router.push('/proyectos/nuevo');
-  };
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleAprobar = async () => {
-    if (!payload) return;
+    if (!inyeccionPayload) return;
     setAprobando(true);
-    setErrorAprobacion(null);
+    setError(null);
 
     try {
       const token = localStorage.getItem('token');
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-      // Subir el JSON a Supabase via /inyeccion/crear-dashboard
       const res = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : '',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(inyeccionPayload),
       });
 
       const data = await res.json();
@@ -119,92 +92,77 @@ export default function MockupPreviewPage() {
       if (data.ok && data.resumen?.dashboard_id) {
         const dashboardId = data.resumen.dashboard_id;
 
-        // Guardar en el historial local de proyectos
-        const nombreNegocio = preview?.nombre_negocio || payload.dashboard.nombre;
-        const localStr = localStorage.getItem('proyectos') || '[]';
-        const locales = JSON.parse(localStr);
-        locales.push({
-          id: dashboardId,
-          dashboard_id: dashboardId,
-          nombre_negocio: nombreNegocio,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('proyectos', JSON.stringify(locales));
-
-        // Limpiar datos pendientes
+        // Limpiar datos temporales
         localStorage.removeItem('pendingERPPreview');
         localStorage.removeItem('pendingInyeccionPayload');
 
-        setAprobado(true);
+        // Guardar referencia en proyectos locales
+        const dash = inyeccionPayload.dashboard as Record<string, string> | undefined;
+        const localProyectosStr = localStorage.getItem('proyectos') || '[]';
+        const localProyectos = JSON.parse(localProyectosStr);
+        localProyectos.push({
+          id: dashboardId,
+          dashboard_id: dashboardId,
+          nombre_negocio: dash?.nombre ?? 'Mi Proyecto',
+          created_at: new Date().toISOString(),
+        });
+        localStorage.setItem('proyectos', JSON.stringify(localProyectos));
 
-        // Redirigir al dashboard operativo
-        setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1200);
+        // Redirigir al editor del dashboard
+        router.push(`/proyectos/${dashboardId}`);
       } else {
         throw new Error(data.error || 'El servidor no devolvió un dashboard_id');
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido al crear el ERP';
-      setErrorAprobacion(msg);
-
-      // Fallback: guardar localmente y redirigir al preview estático
-      if (payload) {
-        localStorage.setItem('currentERPData', JSON.stringify(payload));
-        const nombreNegocio = preview?.nombre_negocio || payload.dashboard.nombre;
-        const localStr = localStorage.getItem('proyectos') || '[]';
-        const locales = JSON.parse(localStr);
-        const localId = 'local-' + Math.random().toString(36).substring(2, 9);
-        locales.push({
-          id: localId,
-          nombre_negocio: nombreNegocio,
-          erp_data: payload,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('proyectos', JSON.stringify(locales));
-        localStorage.removeItem('pendingERPPreview');
-        localStorage.removeItem('pendingInyeccionPayload');
-        setTimeout(() => router.push('/proyectos/preview'), 2000);
-      }
-    } finally {
+      setError(err instanceof Error ? err.message : 'Error al guardar el proyecto');
       setAprobando(false);
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const handleRechazar = () => {
+    // Limpiar datos temporales y volver al wizard
+    localStorage.removeItem('pendingERPPreview');
+    localStorage.removeItem('pendingInyeccionPayload');
+    router.push('/proyectos/nuevo');
+  };
 
-  if (!mounted || !preview || !payload) return null;
+  // ── Render guards ────────────────────────────────────────────────────────────
 
-  const pageClass = `min-h-screen w-full flex flex-col transition-colors duration-300
+  if (!previewData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+      </div>
+    );
+  }
+
+  const pantallas = previewData.data.pantallas ?? [];
+  const pantalla = pantallas[pantallaActiva];
+  const analisis = previewData.data.analisis;
+  const pregunta = previewData.data.pregunta_confirmacion;
+
+  const pageClass = `min-h-screen flex flex-col transition-colors duration-300
     ${isLightMode
       ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900'
       : 'bg-gradient-to-b from-[#0a0a0a] via-[#121224] to-[#0a0a0a] text-white'
     }`;
 
-  const headerClass = `border-b sticky top-0 z-40 transition-colors duration-300
+  const cardClass = `border rounded-2xl backdrop-blur-md transition-colors
     ${isLightMode
-      ? 'border-gray-200 bg-white/80 backdrop-blur-md'
-      : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+      ? 'bg-white border-purple-500/20 shadow-md'
+      : 'bg-[#11111e]/60 border-purple-500/10'
     }`;
-
-  // Estado de éxito
-  if (aprobado) {
-    return (
-      <div className={`${pageClass} items-center justify-center`}>
-        <div className="text-center space-y-6 animate-pulse">
-          <CheckCircle className="w-20 h-20 text-emerald-400 mx-auto" />
-          <h1 className="text-3xl font-bold text-white">¡ERP creado exitosamente!</h1>
-          <p className="text-gray-400">Redirigiendo a tu tablón de control…</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={pageClass}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className={headerClass}>
-        <div className="w-full max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-
+      <header className={`border-b sticky top-0 z-40
+        ${isLightMode
+          ? 'border-gray-200 bg-white/80 backdrop-blur-md'
+          : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+        }`}>
+        <div className="w-full max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={handleRechazar}
@@ -216,160 +174,174 @@ export default function MockupPreviewPage() {
               <ArrowLeft className="w-4 h-4" />
               Volver al wizard
             </button>
-
             <span className={isLightMode ? 'text-gray-300' : 'text-gray-700'}>/</span>
-
             <div className="flex items-center gap-2">
-              <Image src="/new_logo.png" alt="GenIA" width={28} height={28} className="object-contain" />
-              <span className="text-lg font-bold tracking-wider bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
-                GenIA
-              </span>
-            </div>
-
-            <span className={isLightMode ? 'text-gray-300' : 'text-gray-700'}>/</span>
-
-            <div className="flex items-center gap-2">
-              <Sparkles className={`w-4 h-4 ${isLightMode ? 'text-purple-600' : 'text-purple-400'}`} />
-              <span className={`font-semibold ${isLightMode ? 'text-purple-700' : 'text-purple-400'}`}>
+              <Image src="/new_logo.png" alt="GenIA" width={24} height={24} className="object-contain" />
+              <span className="text-sm font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 Vista previa del diseño
               </span>
             </div>
           </div>
 
-          {/* Info del proyecto */}
-          <span className={`text-sm font-medium hidden md:block
-            ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            {preview.nombre_negocio}
+          {/* Tipo de negocio */}
+          <span className={`text-xs px-3 py-1 rounded-full font-semibold
+            ${isLightMode ? 'bg-purple-100 text-purple-700' : 'bg-purple-500/20 text-purple-300'}`}>
+            {analisis.tipo_negocio}
           </span>
         </div>
       </header>
 
-      {/* ── Módulos detectados ─────────────────────────────────────────────── */}
-      {preview.analisis.modulos_detectados && preview.analisis.modulos_detectados.length > 0 && (
-        <div className={`border-b px-6 py-2 flex items-center gap-3 flex-wrap
-          ${isLightMode ? 'border-gray-200 bg-white/50' : 'border-purple-500/10 bg-[#0a0a0a]/30'}`}>
-          <span className={`text-xs font-bold uppercase tracking-widest
-            ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Módulos detectados:
-          </span>
-          {preview.analisis.modulos_detectados.map(m => (
-            <span key={m} className={`px-2 py-0.5 rounded-full text-xs font-semibold
-              ${isLightMode
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-purple-500/20 text-purple-300'
-              }`}>
-              {m}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* ── Contenido ──────────────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 py-6 gap-4">
 
-      {/* ── Contenido principal: iframe ────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col" style={{ minHeight: 0 }}>
-        {preview.preview_html ? (
-          /* Mockup generado por IA */
-          <iframe
-            srcDoc={preview.preview_html}
-            className="flex-1 w-full border-0"
-            style={{ minHeight: 'calc(100vh - 200px)' }}
-            title="Vista previa del ERP generado"
-            sandbox="allow-same-origin allow-scripts"
-          />
-        ) : (
-          /* Fallback: sin preview HTML (la IA falló) */
-          <div className={`flex-1 flex flex-col items-center justify-center gap-6 px-6 py-16
-            ${isLightMode ? 'bg-gray-50' : 'bg-[#0f0f1e]/50'}`}>
-            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center
-              ${isLightMode ? 'bg-amber-100' : 'bg-amber-500/10'}`}>
-              <AlertCircle className={`w-10 h-10 ${isLightMode ? 'text-amber-500' : 'text-amber-400'}`} />
-            </div>
-            <div className="text-center space-y-2 max-w-md">
-              <h2 className={`text-xl font-bold ${isLightMode ? 'text-gray-800' : 'text-white'}`}>
-                No se pudo generar la vista previa
-              </h2>
+        {/* Resumen del análisis */}
+        <div className={`${cardClass} p-4`}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1">
               <p className={`text-sm ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                El agente de diseño no estuvo disponible, pero tu ERP se puede crear con los
-                módulos y campos predefinidos para tu tipo de negocio.
+                {analisis.resumen}
               </p>
-            </div>
-            <div className={`p-5 rounded-2xl border max-w-sm w-full
-              ${isLightMode ? 'border-gray-200 bg-white' : 'border-purple-500/10 bg-[#11111e]/60'}`}>
-              <p className={`text-sm font-semibold mb-3 ${isLightMode ? 'text-gray-700' : 'text-gray-300'}`}>
-                Se crearán los siguientes módulos:
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {(payload.tablas as { etiqueta?: string; nombre?: string }[]).map((t, i) => (
-                  <span key={i} className={`px-2 py-1 rounded-lg text-xs font-medium
-                    ${isLightMode ? 'bg-purple-100 text-purple-700' : 'bg-purple-500/20 text-purple-300'}`}>
-                    {t.etiqueta || t.nombre}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {analisis.modulos_detectados.map(m => (
+                  <span key={m} className={`text-xs px-2 py-0.5 rounded-full
+                    ${isLightMode ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-400'}`}>
+                    {m}
                   </span>
                 ))}
               </div>
             </div>
+
+            {/* Navegación de pantallas */}
+            {pantallas.length > 1 && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setPantallaActiva(p => Math.max(0, p - 1))}
+                  disabled={pantallaActiva === 0}
+                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-30
+                    ${isLightMode ? 'hover:bg-gray-100 text-gray-600' : 'hover:bg-white/10 text-gray-400'}`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className={`text-sm font-semibold min-w-[80px] text-center
+                  ${isLightMode ? 'text-gray-700' : 'text-gray-300'}`}>
+                  {pantalla?.nombre ?? `Pantalla ${pantallaActiva + 1}`}
+                </span>
+                <button
+                  onClick={() => setPantallaActiva(p => Math.min(pantallas.length - 1, p + 1))}
+                  disabled={pantallaActiva === pantallas.length - 1}
+                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-30
+                    ${isLightMode ? 'hover:bg-gray-100 text-gray-600' : 'hover:bg-white/10 text-gray-400'}`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <span className={`text-xs ml-1 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {pantallaActiva + 1} / {pantallas.length}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ── Footer: pregunta + botones ──────────────────────────────────────── */}
-      <div className={`border-t px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4
-        ${isLightMode
-          ? 'border-gray-200 bg-white/90 backdrop-blur-md'
-          : 'border-purple-500/10 bg-[#0a0a0a]/90 backdrop-blur-md'
-        }`}>
-
-        {/* Pregunta de confirmación */}
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold ${isLightMode ? 'text-gray-700' : 'text-gray-200'}`}>
-            {preview.pregunta_confirmacion}
-          </p>
-          {errorAprobacion && (
-            <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3 flex-shrink-0" />
-              {errorAprobacion} — guardando localmente…
-            </p>
+          {/* Tabs de pantallas */}
+          {pantallas.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-purple-500/10">
+              {pantallas.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPantallaActiva(i)}
+                  className={`px-3 py-1 text-xs font-medium rounded-lg transition-all
+                    ${pantallaActiva === i
+                      ? isLightMode
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-500 text-white'
+                      : isLightMode
+                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    }`}
+                >
+                  {p.nombre}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Botones */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Rechazar */}
-          <button
-            onClick={handleRechazar}
-            disabled={aprobando}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm border transition-all
-              disabled:opacity-40 disabled:cursor-not-allowed
-              ${isLightMode
-                ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
-                : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white'
-              }`}
-          >
-            <XCircle className="w-4 h-4" />
-            Rechazar — volver al wizard
-          </button>
-
-          {/* Aprobar */}
-          <button
-            onClick={handleAprobar}
-            disabled={aprobando}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm
-              bg-gradient-to-r from-purple-600 to-pink-600 text-white
-              hover:shadow-lg hover:shadow-purple-500/30 transition-all
-              disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
-          >
-            {aprobando ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creando ERP…
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                Aprobar — crear ERP
-              </>
-            )}
-          </button>
+        {/* Mockup iframe */}
+        <div className={`${cardClass} flex-1 overflow-hidden`} style={{ minHeight: '55vh' }}>
+          {pantalla ? (
+            <iframe
+              srcDoc={pantalla.mockup_html}
+              className="w-full h-full border-0"
+              style={{ minHeight: '55vh' }}
+              title={pantalla.nombre}
+              sandbox="allow-scripts"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className={`text-sm ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                No hay pantallas disponibles
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+
+        {/* Barra de aprobación */}
+        <div className={`${cardClass} p-5`}>
+          {/* Pregunta de confirmación */}
+          <p className={`text-sm font-medium mb-4 text-center
+            ${isLightMode ? 'text-gray-700' : 'text-gray-300'}`}>
+            {pregunta || '¿Este diseño refleja lo que necesitas?'}
+          </p>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 text-xs text-red-400 p-3 rounded-xl
+              bg-red-500/10 border border-red-500/20 mb-4">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* Rechazar */}
+            <button
+              onClick={handleRechazar}
+              disabled={aprobando}
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl
+                text-sm font-semibold border transition-all
+                disabled:opacity-40 disabled:cursor-not-allowed
+                ${isLightMode
+                  ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                  : 'border-white/10 text-gray-300 hover:bg-white/5'
+                }`}
+            >
+              <X className="w-4 h-4" />
+              Rechazar — volver al wizard
+            </button>
+
+            {/* Aprobar */}
+            <button
+              onClick={handleAprobar}
+              disabled={aprobando}
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl
+                text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white
+                hover:shadow-xl hover:shadow-purple-500/40 transition-all transform hover:scale-105
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {aprobando ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Guardando en Supabase…
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Aprobar diseño y crear proyecto
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

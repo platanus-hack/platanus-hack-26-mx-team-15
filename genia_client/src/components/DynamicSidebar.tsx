@@ -135,6 +135,8 @@ interface DynamicSidebarProps {
   tablaActivaId: string | null;
   isLightMode?: boolean;
   saving?: boolean;
+  /** Si true: oculta botones de agregar, renombrar y eliminar módulos */
+  readonly?: boolean;
   onSelectTabla: (tablaId: string) => void;
   onAddTabla: () => void;
   onRenameTabla: (tablaId: string, nuevaEtiqueta: string) => void;
@@ -150,6 +152,7 @@ export default function DynamicSidebar({
   tablaActivaId,
   isLightMode = false,
   saving = false,
+  readonly = false,
   onSelectTabla,
   onAddTabla,
   onRenameTabla,
@@ -183,7 +186,7 @@ export default function DynamicSidebar({
           ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
           Módulos
         </span>
-        <button
+        {!readonly && <button
           onClick={onAddTabla}
           disabled={saving}
           className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold
@@ -196,7 +199,7 @@ export default function DynamicSidebar({
         >
           <Plus className="w-3.5 h-3.5" />
           Nuevo
-        </button>
+        </button>}
       </div>
 
       {/* Lista de tablas */}
@@ -261,8 +264,8 @@ export default function DynamicSidebar({
                   </span>
                 )}
 
-                {/* Acciones: visibles sólo con hover (o si está confirmando delete) */}
-                {!isConfirmingDelete && (
+                {/* Acciones: visibles sólo con hover — ocultas en modo readonly */}
+                {!readonly && !isConfirmingDelete && (
                   <div className={`flex items-center gap-0.5 flex-shrink-0 transition-opacity
                     ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                     onClick={e => e.stopPropagation()}
@@ -300,8 +303,8 @@ export default function DynamicSidebar({
                   </div>
                 )}
 
-                {/* Confirmación de eliminación */}
-                {isConfirmingDelete && (
+                {/* Confirmación de eliminación — oculta en modo readonly */}
+                {!readonly && isConfirmingDelete && (
                   <div
                     className="flex items-center gap-0.5 flex-shrink-0"
                     onClick={e => e.stopPropagation()}

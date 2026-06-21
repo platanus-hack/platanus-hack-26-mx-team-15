@@ -54,11 +54,13 @@ function getEmoji(icono: string): string {
 function DashboardCard({
   dashboard,
   isLightMode,
-  onClick,
+  onGoToProject,
+  onEditor,
 }: {
   dashboard: DashboardResumen;
   isLightMode: boolean;
-  onClick: () => void;
+  onGoToProject: () => void;
+  onEditor: () => void;
 }) {
   const estilo = dashboard.estilos.find(e => e.activo) ?? dashboard.estilos[0];
   const fecha = new Date(dashboard.created_at).toLocaleDateString('es-MX', {
@@ -70,13 +72,12 @@ function DashboardCard({
       className={`
         relative border rounded-3xl p-6 backdrop-blur-md
         hover:shadow-xl transition-all duration-300 flex flex-col justify-between
-        group overflow-hidden cursor-pointer
+        group overflow-hidden
         ${isLightMode
           ? 'bg-white border-purple-500/20 hover:border-purple-500/40 hover:shadow-purple-500/5 text-gray-900'
           : 'bg-[#11111e]/40 border-purple-500/10 hover:border-purple-500/30 hover:shadow-purple-500/10 text-white'
         }
       `}
-      onClick={onClick}
     >
       {/* Orbe decorativo */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/5 to-transparent
@@ -156,14 +157,36 @@ function DashboardCard({
         )}
       </div>
 
-      {/* Footer */}
-      <div className={`flex items-center justify-between pt-5 mt-4 border-t text-xs
-        ${isLightMode ? 'border-gray-100 text-gray-400' : 'border-purple-500/5 text-gray-500'}`}>
-        <span>Creado el {fecha}</span>
-        <span className="flex items-center gap-1 font-bold text-purple-400
-          group-hover:text-purple-300 transition-colors uppercase tracking-wider">
-          Gestionar →
-        </span>
+      {/* Footer: fecha + 2 botones */}
+      <div className={`pt-5 mt-4 border-t
+        ${isLightMode ? 'border-gray-100' : 'border-purple-500/5'}`}>
+        <p className={`text-xs mb-3 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          Creado el {fecha}
+        </p>
+        <div className="flex gap-2">
+          {/* Ir a proyecto — prominente */}
+          <button
+            onClick={e => { e.stopPropagation(); onGoToProject(); }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3
+              rounded-xl text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600
+              text-white hover:shadow-lg hover:shadow-purple-500/30 transition-all
+              hover:scale-[1.02]"
+          >
+            ⭐ Ir a proyecto
+          </button>
+          {/* Editor — secundario */}
+          <button
+            onClick={e => { e.stopPropagation(); onEditor(); }}
+            className={`flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl
+              text-xs font-semibold border transition-all hover:scale-[1.02]
+              ${isLightMode
+                ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                : 'border-purple-500/30 text-purple-400 hover:bg-purple-500/10'
+              }`}
+          >
+            ✏️ Editor
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -176,11 +199,13 @@ function DashboardCard({
 function ProyectoLocalCard({
   proyecto,
   isLightMode,
-  onClick,
+  onVerProyecto,
+  onEditor,
 }: {
   proyecto: ProyectoLocal;
   isLightMode: boolean;
-  onClick: () => void;
+  onVerProyecto: () => void;
+  onEditor: () => void;
 }) {
   const fecha = new Date(proyecto.created_at).toLocaleDateString('es-MX', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -190,9 +215,8 @@ function ProyectoLocalCard({
 
   return (
     <div
-      onClick={onClick}
       className={`
-        relative border rounded-3xl p-6 backdrop-blur-md cursor-pointer
+        relative border rounded-3xl p-6 backdrop-blur-md
         hover:shadow-xl transition-all duration-300 flex flex-col justify-between
         group overflow-hidden
         ${isLightMode
@@ -245,13 +269,35 @@ function ProyectoLocalCard({
         )}
       </div>
 
-      <div className={`flex items-center justify-between pt-5 mt-4 border-t text-xs
-        ${isLightMode ? 'border-gray-100 text-gray-400' : 'border-amber-500/5 text-gray-500'}`}>
-        <span>Creado el {fecha}</span>
-        <span className="font-bold text-amber-400 group-hover:text-amber-300
-          uppercase tracking-wider transition-colors">
-          Ver preview →
-        </span>
+      <div className={`pt-5 mt-4 border-t
+        ${isLightMode ? 'border-gray-100' : 'border-amber-500/5'}`}>
+        <p className={`text-xs mb-3 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          Creado el {fecha}
+        </p>
+        <div className="flex gap-2">
+          {/* Ver proyecto — prominente */}
+          <button
+            onClick={e => { e.stopPropagation(); onVerProyecto(); }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3
+              rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-orange-500
+              text-white hover:shadow-lg hover:shadow-amber-500/30 transition-all
+              hover:scale-[1.02]"
+          >
+            ⭐ Ver proyecto
+          </button>
+          {/* Editor — secundario */}
+          <button
+            onClick={e => { e.stopPropagation(); onEditor(); }}
+            className={`flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl
+              text-xs font-semibold border transition-all hover:scale-[1.02]
+              ${isLightMode
+                ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                : 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
+              }`}
+          >
+            ✏️ Editor
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -322,19 +368,7 @@ export default function ProyectosPage() {
       const data = await listDashboards();
       setDashboards(data);
     } catch (err) {
-      // Clasificar el error para dar un mensaje más útil al usuario
-      let msg = 'El servidor no está disponible momentáneamente.';
-      if (err instanceof Error) {
-        if (err.message.includes('401') || err.message.toLowerCase().includes('token')) {
-          msg = 'Tu sesión ha expirado. Cierra sesión e inicia de nuevo para ver tus proyectos en la nube.';
-        } else if (err.message.includes('500') || err.message.includes('schema')) {
-          msg = 'La base de datos está inicializándose. Crea tu primer proyecto para activarla.';
-        } else if (err.message.includes('network') || err.message.includes('fetch')) {
-          msg = 'Sin conexión al servidor. Comprueba tu internet o espera a que el servidor esté disponible.';
-        } else {
-          msg = err.message;
-        }
-      }
+      const msg = err instanceof Error ? err.message : 'Error al cargar dashboards';
       setApiError(msg);
       setDashboards([]);
     } finally {
@@ -371,9 +405,18 @@ export default function ProyectosPage() {
 
   const handleNuevoProyecto = () => router.push('/proyectos/nuevo');
 
-  const handleGestionarDashboard = (id: string) => router.push(`/proyectos/${id}`);
+  // Dashboard de la nube
+  const handleIrAProyecto = (id: string) => router.push(`/proyectos/${id}/simple`);
+  const handleEditor = (id: string) => router.push(`/proyectos/${id}`);
 
-  const handleGestionarLocal = (proyecto: ProyectoLocal) => {
+  // Proyecto local (offline)
+  const handleVerProyectoLocal = (proyecto: ProyectoLocal) => {
+    if (proyecto.erp_data) {
+      localStorage.setItem('currentERPData', JSON.stringify(proyecto.erp_data));
+    }
+    router.push('/proyectos/preview');
+  };
+  const handleEditorLocal = (proyecto: ProyectoLocal) => {
     if (proyecto.erp_data) {
       localStorage.setItem('currentERPData', JSON.stringify(proyecto.erp_data));
     }
@@ -501,7 +544,7 @@ export default function ProyectosPage() {
         {!loading && (
           <div className="space-y-8 animate-fade-in">
 
-            {/* Banner de error del API (no crítico, con mensaje diferenciado) */}
+            {/* Banner de error del API (no crítico) */}
             {apiError && (
               <div className={`flex items-start gap-3 p-4 rounded-2xl border
                 ${isLightMode
@@ -509,17 +552,12 @@ export default function ProyectosPage() {
                   : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
                 }`}>
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">Proyectos en la nube no disponibles</p>
-                  <p className="text-xs mt-0.5 opacity-80">{apiError}</p>
+                <div>
+                  <p className="text-sm font-semibold">No se pudo conectar al servidor</p>
+                  <p className="text-xs mt-0.5 opacity-80">
+                    Mostrando solo proyectos guardados localmente. {apiError}
+                  </p>
                 </div>
-                <button
-                  onClick={cargarDatos}
-                  className={`text-xs font-semibold underline flex-shrink-0
-                    ${isLightMode ? 'text-amber-700 hover:text-amber-900' : 'text-amber-300 hover:text-amber-100'}`}
-                >
-                  Reintentar
-                </button>
               </div>
             )}
 
@@ -633,7 +671,8 @@ export default function ProyectosPage() {
                           key={d.id}
                           dashboard={d}
                           isLightMode={isLightMode}
-                          onClick={() => handleGestionarDashboard(d.id)}
+                          onGoToProject={() => handleIrAProyecto(d.id)}
+                          onEditor={() => handleEditor(d.id)}
                         />
                       ))}
                     </div>
@@ -655,7 +694,8 @@ export default function ProyectosPage() {
                           key={p.id}
                           proyecto={p}
                           isLightMode={isLightMode}
-                          onClick={() => handleGestionarLocal(p)}
+                          onVerProyecto={() => handleVerProyectoLocal(p)}
+                          onEditor={() => handleEditorLocal(p)}
                         />
                       ))}
                     </div>
