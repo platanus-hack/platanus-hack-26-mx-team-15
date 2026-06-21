@@ -16,6 +16,51 @@ import type {
 } from "@/types/dashboard";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ERP PREVIEW — Generación con IA (Claude)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Resultado que devuelve POST /erp/generar */
+export interface ERPPreviewResult {
+    /** Análisis del negocio generado por Claude */
+    analisis: {
+        tipo_negocio: string;
+        resumen: string;
+        modulos_detectados: string[];
+        roles: { nombre: string; permisos: string[] }[];
+    };
+    /** Diseño de base de datos propuesto por la IA */
+    base_de_datos: {
+        tablas: { nombre: string; campos: string[] }[];
+    };
+    /** Pantallas / mockups generados con HTML inline */
+    pantallas: { nombre: string; mockup_html: string }[];
+    /** Pregunta de confirmación que la IA hace al usuario */
+    pregunta_confirmacion: string;
+}
+
+/**
+ * Llama al agente de IA (Claude) para generar mockups HTML del ERP.
+ * POST /erp/generar
+ * Puede tardar 30-90 segundos.
+ */
+export const generateERPPreview = async (
+    formPayload: Record<string, unknown>
+): Promise<{ data: ERPPreviewResult; preview_html: string }> => {
+    const res = await api.post<{
+        success: boolean;
+        data: ERPPreviewResult;
+        preview_html: string;
+        error?: string;
+        raw?: string;
+    }>("/erp/generar", formPayload);
+
+    if (!res.data.success) {
+        throw new Error(res.data.error ?? "Error al generar el preview del ERP");
+    }
+    return { data: res.data.data, preview_html: res.data.preview_html };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 

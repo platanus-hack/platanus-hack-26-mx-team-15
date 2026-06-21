@@ -43,7 +43,16 @@ export const listarDashboards = async (req, res) => {
             .eq("user_id", userId)
             .order("created_at", { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            // PGRST205 = la tabla no existe aún en el schema cache de Supabase
+            // (ocurre cuando ningún dashboard ha sido creado todavía en producción).
+            // En lugar de devolver 500 y romper el frontend, devolvemos lista vacía.
+            if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+                console.warn("listarDashboards: tablas no encontradas en Supabase (PGRST205). Devolviendo lista vacía.");
+                return res.status(200).json({ ok: true, data: [] });
+            }
+            throw error;
+        }
 
         // Ordenar las tablas de cada dashboard por su campo orden
         const resultado = (dashboards || []).map(d => ({

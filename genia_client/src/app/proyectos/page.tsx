@@ -322,7 +322,19 @@ export default function ProyectosPage() {
       const data = await listDashboards();
       setDashboards(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error al cargar dashboards';
+      // Clasificar el error para dar un mensaje más útil al usuario
+      let msg = 'El servidor no está disponible momentáneamente.';
+      if (err instanceof Error) {
+        if (err.message.includes('401') || err.message.toLowerCase().includes('token')) {
+          msg = 'Tu sesión ha expirado. Cierra sesión e inicia de nuevo para ver tus proyectos en la nube.';
+        } else if (err.message.includes('500') || err.message.includes('schema')) {
+          msg = 'La base de datos está inicializándose. Crea tu primer proyecto para activarla.';
+        } else if (err.message.includes('network') || err.message.includes('fetch')) {
+          msg = 'Sin conexión al servidor. Comprueba tu internet o espera a que el servidor esté disponible.';
+        } else {
+          msg = err.message;
+        }
+      }
       setApiError(msg);
       setDashboards([]);
     } finally {
@@ -489,7 +501,7 @@ export default function ProyectosPage() {
         {!loading && (
           <div className="space-y-8 animate-fade-in">
 
-            {/* Banner de error del API (no crítico) */}
+            {/* Banner de error del API (no crítico, con mensaje diferenciado) */}
             {apiError && (
               <div className={`flex items-start gap-3 p-4 rounded-2xl border
                 ${isLightMode
@@ -497,12 +509,17 @@ export default function ProyectosPage() {
                   : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
                 }`}>
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold">No se pudo conectar al servidor</p>
-                  <p className="text-xs mt-0.5 opacity-80">
-                    Mostrando solo proyectos guardados localmente. {apiError}
-                  </p>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Proyectos en la nube no disponibles</p>
+                  <p className="text-xs mt-0.5 opacity-80">{apiError}</p>
                 </div>
+                <button
+                  onClick={cargarDatos}
+                  className={`text-xs font-semibold underline flex-shrink-0
+                    ${isLightMode ? 'text-amber-700 hover:text-amber-900' : 'text-amber-300 hover:text-amber-100'}`}
+                >
+                  Reintentar
+                </button>
               </div>
             )}
 

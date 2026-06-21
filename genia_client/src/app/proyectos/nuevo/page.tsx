@@ -138,14 +138,19 @@ export default function NuevoProyectoPage() {
 
   useEffect(() => {
     if (!isSubmitting) return;
+    const mensajes = [
+      'Analizando tu negocio',
+      'Diseñando las pantallas',
+      'Estructurando la base de datos',
+      'Generando los módulos',
+      'Creando el ERP personalizado',
+      'Casi listo',
+    ];
+    let idx = 0;
     const interval = setInterval(() => {
-      setLoadingText((prev) => {
-        if (prev === 'Loading...') return 'Loading';
-        if (prev === 'Loading..') return 'Loading...';
-        if (prev === 'Loading.') return 'Loading..';
-        return 'Loading.';
-      });
-    }, 500);
+      idx = (idx + 1) % mensajes.length;
+      setLoadingText(mensajes[idx]);
+    }, 3000);
     return () => clearInterval(interval);
   }, [isSubmitting]);
 
@@ -506,7 +511,7 @@ export default function NuevoProyectoPage() {
     };
 
     try {
-      // Paso 1: si hay Excel, procesar primero y adjuntar resultado al payload
+      // ── Paso 1: procesar Excel si se adjuntó ──────────────────────────────
       let conversionResultado = null;
       if (excelFile) {
         const formData = new FormData();
@@ -537,57 +542,58 @@ export default function NuevoProyectoPage() {
         base_de_datos_existente: null,
       };
 
-      // Paso 2: crear dashboard en Supabase
-      const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
+      // ── Paso 2: llamar al agente de IA para generar mockups ───────────────
+      // (Este paso puede tardar 30-90 segundos mientras Claude genera los HTML)
+      const erpRes = await fetch(`${backendUrl}/erp/generar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : '',
         },
-        body: JSON.stringify(inyeccionPayload),
+        body: JSON.stringify(formPayload),
       });
 
-      const data = await response.json();
-
-      if (data.ok && data.resumen?.dashboard_id) {
-        // ✅ Éxito: guardar referencia y redirigir al dashboard operativo
-        const dashboardId = data.resumen.dashboard_id;
-        const localProyectosStr = localStorage.getItem('proyectos') || '[]';
-        const localProyectos = JSON.parse(localProyectosStr);
-        localProyectos.push({
-          id: dashboardId,
-          dashboard_id: dashboardId,
-          nombre_negocio: nombreFinal,
-          configuracion: formPayload,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-        setSuccess(true);
-        setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
-      } else {
-        throw new Error(data.error || 'El servidor no devolvió un dashboard_id');
+      if (!erpRes.ok) {
+        throw new Error(`El agente de IA respondió con error ${erpRes.status}`);
       }
-    } catch (apiError) {
-      // ⚠️ Fallback: guardar en localStorage y redirigir al preview estático
-      console.warn('API no disponible, usando modo local:', apiError);
-      localStorage.setItem('currentERPData', JSON.stringify(inyeccionPayload));
-      const localProyectosStr = localStorage.getItem('proyectos') || '[]';
-      const localProyectos = JSON.parse(localProyectosStr);
-      localProyectos.push({
-        id: 'local-' + Math.random().toString(36).substring(2, 9),
+
+      const erpData = await erpRes.json();
+
+      if (!erpData.success) {
+        throw new Error(erpData.error || 'El agente no pudo generar el diseño');
+      }
+
+      // ── Paso 3: guardar en localStorage y redirigir a la página de aprobación
+      // El usuario verá los mockups y podrá aprobar o rechazar.
+      // pendingInyeccionPayload: lo que se subirá a Supabase si aprueba
+      // pendingERPPreview: la respuesta completa de la IA (para mostrar)
+      localStorage.setItem('pendingInyeccionPayload', JSON.stringify(inyeccionPayload));
+      localStorage.setItem('pendingERPPreview', JSON.stringify({
+        preview_html: erpData.preview_html,
+        pregunta_confirmacion: erpData.data?.pregunta_confirmacion ?? '¿Este diseño refleja lo que necesitas?',
+        analisis: erpData.data?.analisis ?? {},
         nombre_negocio: nombreFinal,
-        configuracion: {
-          tipo_negocio: tipoFinal, tamano, operacion,
-          modulos_deseados: modulosDeseados, flujo, tecnologia,
-          // Incluir conversion en el fallback también para consistencia
-          datos_existentes: { ...datosExistentes, conversion: null },
-        },
-        erp_data: inyeccionPayload,
-        created_at: new Date().toISOString(),
-      });
-      localStorage.setItem('proyectos', JSON.stringify(localProyectos));
+      }));
+
       setSuccess(true);
-      setTimeout(() => router.push('/proyectos/preview'), 1000);
+      setTimeout(() => router.push('/proyectos/mockup-preview'), 800);
+
+    } catch (apiError) {
+      // ── Fallback: si la IA falla, guardar el payload hardcodeado y pedir
+      // confirmación desde el preview estático (sin mockups de IA).
+      console.warn('API o agente IA no disponible, usando modo local:', apiError);
+
+      // Guardar payload para que mockup-preview lo use sin preview HTML
+      localStorage.setItem('pendingInyeccionPayload', JSON.stringify(inyeccionPayload));
+      localStorage.setItem('pendingERPPreview', JSON.stringify({
+        preview_html: null,
+        pregunta_confirmacion: '¿Deseas crear tu ERP con los módulos seleccionados?',
+        analisis: { tipo_negocio: tipoFinal, resumen: '', modulos_detectados: modulosDeseados, roles: [] },
+        nombre_negocio: nombreFinal,
+      }));
+
+      setSuccess(true);
+      setTimeout(() => router.push('/proyectos/mockup-preview'), 800);
     } finally {
       setIsSubmitting(false);
     }
