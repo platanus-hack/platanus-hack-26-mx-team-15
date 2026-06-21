@@ -33,7 +33,7 @@ export type DashboardResumen = Pick<
  * GET /dashboard
  */
 export const listDashboards = async (): Promise<DashboardResumen[]> => {
-    const res = await api.get<ApiResponse<DashboardResumen[]>>("/listar/163c351a-ff4e-4b1f-8dc7-450e85c952cf");
+    const res = await api.get<ApiResponse<DashboardResumen[]>>("/dashboard");
     if (!res.data.ok || !res.data.data) {
         throw new Error(res.data.error ?? "Error al listar los dashboards");
     }
