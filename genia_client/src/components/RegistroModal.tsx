@@ -140,11 +140,11 @@ export default function RegistroModal({ isOpen, onClose, onSwitchToLogin }: Regi
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
             <Image 
-              src="/l.png" 
+              src="/new_logo.png" 
               alt="GenIA" 
               width={40} 
               height={40}
-              className="rounded-full"
+              className="object-contain"
             />
           </div>
         </div>

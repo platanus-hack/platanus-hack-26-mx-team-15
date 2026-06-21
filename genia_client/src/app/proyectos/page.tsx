@@ -21,6 +21,27 @@ export default function ProyectosPage() {
   const [mounted, setMounted] = useState(false);
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLightMode, setIsLightMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setIsLightMode(savedTheme === 'light');
+  }, []);
+
+  useEffect(() => {
+    if (isLightMode) {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+  }, [isLightMode]);
+
+  const toggleTheme = () => {
+    const nextTheme = !isLightMode;
+    setIsLightMode(nextTheme);
+    localStorage.setItem('theme', nextTheme ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -103,9 +124,17 @@ export default function ProyectosPage() {
   const displayName = usuario.nombre || usuario.user_metadata?.nombre || usuario.email?.split('@')[0] || 'Usuario';
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]">
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
+      isLightMode 
+        ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900' 
+        : 'bg-gradient-to-b from-[#0a0a0a] via-[#1a1a2e] to-[#0a0a0a]'
+    }`}>
       {/* Header */}
-      <header className="border-b border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-40">
+      <header className={`border-b sticky top-0 z-40 transition-colors duration-300 ${
+        isLightMode 
+          ? 'border-gray-200 bg-white/80 backdrop-blur-md' 
+          : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+      }`}>
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-6">
             {/* Logo y nombre */}
@@ -115,11 +144,11 @@ export default function ProyectosPage() {
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Image
-                  src="/l.png"
+                  src="/new_logo.png"
                   alt="GenIA Logo"
                   width={40}
                   height={40}
-                  className="rounded-full"
+                  className="object-contain"
                 />
                 <span className="text-2xl font-bold tracking-wider bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
                   GenIA
@@ -127,14 +156,20 @@ export default function ProyectosPage() {
               </button>
             </div>
 
-            {/* Right side: Search bar + User info */}
+            {/* Right side: Search bar + Theme Toggle + User info */}
             <div className="flex items-center gap-4">
               {/* Search bar */}
               <div className="relative w-80 hidden sm:block">
                 <input
                   type="text"
                   placeholder="Buscar..."
-                  className="w-full px-4 py-2 pl-10 bg-[#1a1a2e] border border-purple-500/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full px-4 py-2 pl-10 border rounded-lg transition-colors ${
+                    isLightMode 
+                      ? 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-purple-500/50' 
+                      : 'bg-[#1a1a2e] border-purple-500/20 text-white placeholder-gray-500 focus:border-purple-500/50'
+                  }`}
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"
@@ -146,9 +181,32 @@ export default function ProyectosPage() {
                 </svg>
               </div>
 
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl border transition-all ${
+                  isLightMode 
+                    ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200' 
+                    : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
+                }`}
+                title="Cambiar tema"
+              >
+                {isLightMode ? (
+                  // Moon Icon
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                ) : (
+                  // Sun Icon
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                )}
+              </button>
+
               {/* User info */}
               <div className="text-right">
-                <p className="text-white font-semibold">{displayName}</p>
+                <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-white'}`}>{displayName}</p>
               </div>
               <button
                 onClick={handleLogout}
@@ -173,8 +231,8 @@ export default function ProyectosPage() {
             {/* Header de listado */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-extrabold text-white tracking-wide">Mis Proyectos</h1>
-                <p className="text-gray-400 mt-1">Gestiona y administra los sistemas ERP generados para tus negocios.</p>
+                <h1 className={`text-4xl font-extrabold tracking-wide ${isLightMode ? 'text-gray-900' : 'text-white'}`}>Mis Proyectos</h1>
+                <p className={`${isLightMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>Gestiona y administra los sistemas ERP generados para tus negocios.</p>
               </div>
               <button
                 onClick={handleNuevoProyecto}
@@ -189,7 +247,11 @@ export default function ProyectosPage() {
 
             {/* Grid de proyectos */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proyectos.map((proy) => {
+              {proyectos.filter((proy) => {
+                const nameMatch = proy.nombre_negocio?.toLowerCase().includes(searchQuery.toLowerCase());
+                const typeMatch = proy.configuracion?.tipo_negocio?.toLowerCase().includes(searchQuery.toLowerCase());
+                return nameMatch || typeMatch;
+              }).map((proy) => {
                 const config = proy.configuracion || {};
                 const numEmpleados = config.tamano?.num_empleados || 'N/A';
                 const numSucursales = config.tamano?.num_sucursales || 'N/A';
@@ -202,7 +264,11 @@ export default function ProyectosPage() {
                 return (
                   <div
                     key={proy.id}
-                    className="bg-[#11111e]/40 border border-purple-500/10 rounded-3xl p-6 backdrop-blur-md hover:border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/5 transition-all flex flex-col justify-between group relative overflow-hidden"
+                    className={`border rounded-3xl p-6 backdrop-blur-md hover:shadow-xl transition-all flex flex-col justify-between group relative overflow-hidden ${
+                      isLightMode 
+                        ? 'bg-white border-purple-500/20 hover:border-purple-500/40 hover:shadow-purple-500/5 text-gray-900' 
+                        : 'bg-[#11111e]/40 border-purple-500/10 hover:border-purple-500/30 hover:shadow-purple-500/5 text-white'
+                    }`}
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-150 transition-all duration-700"></div>
                     
@@ -213,7 +279,9 @@ export default function ProyectosPage() {
                           <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-400">
                             {config.tipo_negocio || 'ERP personalizado'}
                           </span>
-                          <h3 className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors pt-2">
+                          <h3 className={`text-xl font-bold group-hover:text-purple-500 transition-colors pt-2 ${
+                            isLightMode ? 'text-gray-900' : 'text-white'
+                          }`}>
                             {proy.nombre_negocio}
                           </h3>
                         </div>
@@ -225,14 +293,14 @@ export default function ProyectosPage() {
                       </div>
 
                       {/* Métricas de negocio */}
-                      <div className="grid grid-cols-2 gap-4 py-2 border-y border-white/5 text-sm">
+                      <div className="grid grid-cols-2 gap-4 py-2 border-y border-purple-500/10 text-sm">
                         <div>
                           <p className="text-gray-500 text-xs font-medium">Empleados</p>
-                          <p className="text-gray-300 font-semibold">{numEmpleados}</p>
+                          <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-gray-300'}`}>{numEmpleados}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 text-xs font-medium">Sucursales</p>
-                          <p className="text-gray-300 font-semibold">{numSucursales}</p>
+                          <p className={`font-semibold ${isLightMode ? 'text-gray-800' : 'text-gray-300'}`}>{numSucursales}</p>
                         </div>
                       </div>
 
@@ -242,7 +310,9 @@ export default function ProyectosPage() {
                           <p className="text-gray-500 text-xs font-medium">Módulos habilitados</p>
                           <div className="flex flex-wrap gap-1">
                             {config.modulos_deseados.slice(0, 4).map((mod: string) => (
-                              <span key={mod} className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-xs text-gray-300 font-medium">
+                              <span key={mod} className={`px-2 py-0.5 rounded border text-xs font-medium ${
+                                isLightMode ? 'bg-gray-100 border-gray-200 text-gray-700' : 'bg-white/5 border-white/5 text-gray-300'
+                              }`}>
                                 {mod}
                               </span>
                             ))}
@@ -256,7 +326,7 @@ export default function ProyectosPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/5 text-xs text-gray-500">
+                    <div className="flex items-center justify-between pt-6 mt-4 border-t border-purple-500/5 text-xs text-gray-500">
                       <span>Creado el {fecha}</span>
                       <button className="flex items-center gap-1 font-bold text-purple-400 hover:text-purple-300 transition-colors uppercase tracking-wider">
                         <span>Gestionar</span>
@@ -285,10 +355,10 @@ export default function ProyectosPage() {
 
               {/* Text */}
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-wide">
+                <h1 className={`text-4xl md:text-5xl font-bold tracking-wide ${isLightMode ? 'text-gray-900' : 'text-white'}`}>
                   No tienes proyectos aún
                 </h1>
-                <p className="text-gray-400 text-lg leading-relaxed">
+                <p className={`text-lg leading-relaxed ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
                   Comienza creando tu primer proyecto ERP personalizado.
                   <br />
                   Gestiona tu negocio de manera inteligente y eficiente.
@@ -316,7 +386,7 @@ export default function ProyectosPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Rápido y fácil</p>
+                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Rápido y fácil</p>
                 </div>
                 <div className="space-y-2">
                   <div className="w-12 h-12 mx-auto rounded-lg bg-cyan-500/20 flex items-center justify-center">
@@ -324,7 +394,7 @@ export default function ProyectosPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Personalizable</p>
+                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Personalizable</p>
                 </div>
                 <div className="space-y-2">
                   <div className="w-12 h-12 mx-auto rounded-lg bg-pink-500/20 flex items-center justify-center">
@@ -332,7 +402,7 @@ export default function ProyectosPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">Seguro</p>
+                  <p className={`text-sm ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>Seguro</p>
                 </div>
               </div>
             </div>

@@ -44,8 +44,30 @@ export default function NuevoProyectoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [loadingText, setLoadingText] = useState('Loading');
+  const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setIsLightMode(savedTheme === 'light');
+  }, []);
+
+  useEffect(() => {
+    if (isLightMode) {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.remove('light-mode');
+    }
+  }, [isLightMode]);
+
+  const toggleTheme = () => {
+    const nextTheme = !isLightMode;
+    setIsLightMode(nextTheme);
+    localStorage.setItem('theme', nextTheme ? 'light' : 'dark');
+  };
 
   // Estados del Formulario
+  const [nombreNegocio, setNombreNegocio] = useState('');
   const [tipoNegocio, setTipoNegocio] = useState('');
   const [otroTipoNegocio, setOtroTipoNegocio] = useState('');
   const [tamano, setTamano] = useState({ num_empleados: '', num_sucursales: '' });
@@ -115,9 +137,23 @@ export default function NuevoProyectoPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    if (!isSubmitting) return;
+    const interval = setInterval(() => {
+      setLoadingText((prev) => {
+        if (prev === 'Loading...') return 'Loading';
+        if (prev === 'Loading..') return 'Loading...';
+        if (prev === 'Loading.') return 'Loading..';
+        return 'Loading.';
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isSubmitting]);
+
   // Lista de preguntas dinámicas basada en la selección
   const getActiveQuestions = () => {
     const list = [
+      { id: 'nombre_negocio', answered: !!nombreNegocio },
       { id: 'tipo_negocio', answered: !!tipoNegocio && (tipoNegocio !== 'Otro' || !!otroTipoNegocio) },
       { id: 'num_empleados', answered: !!tamano.num_empleados },
       { id: 'num_sucursales', answered: !!tamano.num_sucursales },
@@ -255,6 +291,7 @@ export default function NuevoProyectoPage() {
     setIsSubmitting(true);
 
     const payload = {
+      nombre_negocio: nombreNegocio,
       tipo_negocio: tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio,
       tamano,
       operacion,
@@ -288,7 +325,12 @@ export default function NuevoProyectoPage() {
       // Guardar el proyecto devuelto en localStorage (independientemente si viene de base de datos o mockup del backend)
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
-      localProyectos.push(resData.data || payload);
+      localProyectos.push(resData.data || {
+        id: 'local-' + Math.random().toString(36).substring(2, 9),
+        nombre_negocio: nombreNegocio || `Mi ${payload.tipo_negocio}`,
+        configuracion: payload,
+        created_at: new Date().toISOString()
+      });
       localStorage.setItem('proyectos', JSON.stringify(localProyectos));
 
       setSuccess(true);
@@ -304,7 +346,7 @@ export default function NuevoProyectoPage() {
       const localProyectos = JSON.parse(localProyectosStr);
       const mockProject = {
         id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: `Mi ${payload.tipo_negocio}`,
+        nombre_negocio: nombreNegocio || `Mi ${payload.tipo_negocio}`,
         configuracion: payload,
         created_at: new Date().toISOString()
       };
@@ -323,26 +365,61 @@ export default function NuevoProyectoPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#0a0a0a] via-[#121224] to-[#0a0a0a] text-white flex flex-col pb-24">
+    <div className={`min-h-screen w-full flex flex-col pb-24 transition-colors duration-300 ${
+      isLightMode 
+        ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900' 
+        : 'bg-gradient-to-b from-[#0a0a0a] via-[#121224] to-[#0a0a0a] text-white'
+    }`}>
       {/* Header */}
-      <header className="border-b border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-40">
+      <header className={`border-b sticky top-0 z-40 transition-colors duration-300 ${
+        isLightMode 
+          ? 'border-gray-200 bg-white/80 backdrop-blur-md' 
+          : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+      }`}>
         <div className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/proyectos')}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              className={`flex items-center gap-2 transition-colors ${
+                isLightMode ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'
+              }`}
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Panel</span>
             </button>
-            <span className="text-gray-600">/</span>
-            <span className="font-semibold text-purple-400">Configurar Negocio</span>
+            <span className={isLightMode ? 'text-gray-300' : 'text-gray-600'}>/</span>
+            <span className={`font-semibold ${isLightMode ? 'text-purple-600' : 'text-purple-400'}`}>Configurar Negocio</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Image src="/l.png" alt="GenIA Logo" width={32} height={32} className="rounded-full" />
-            <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              GenIA Wizard
-            </span>
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-xl border transition-all ${
+                isLightMode 
+                  ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200' 
+                  : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
+              }`}
+              title="Cambiar tema"
+            >
+              {isLightMode ? (
+                // Moon Icon
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              ) : (
+                // Sun Icon
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )}
+            </button>
+
+            <div className="flex items-center gap-3">
+              <Image src="/new_logo.png" alt="GenIA Logo" width={32} height={32} className="object-contain" />
+              <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                GenIA Wizard
+              </span>
+            </div>
           </div>
         </div>
       </header>
@@ -351,9 +428,15 @@ export default function NuevoProyectoPage() {
       <main className="w-full max-w-7xl mx-auto px-6 py-8 flex-1 grid grid-cols-1 md:grid-cols-4 gap-8">
         
         {/* Sidebar Navigation */}
-        <aside className="md:col-span-1 space-y-3">
-          <div className="bg-[#11111e]/60 border border-purple-500/10 rounded-2xl p-5 backdrop-blur-md sticky top-24">
-            <h3 className="text-sm font-bold text-gray-400 tracking-wider uppercase mb-4">Secciones</h3>
+        <aside className="md:col-span-1 space-y-3 animate-fade-in">
+          <div className={`border rounded-2xl p-5 backdrop-blur-md sticky top-24 transition-colors duration-300 ${
+            isLightMode 
+              ? 'bg-white border-purple-500/20 shadow-md shadow-purple-500/5' 
+              : 'bg-[#11111e]/60 border-purple-500/10'
+          }`}>
+            <h3 className={`text-sm font-bold tracking-wider uppercase mb-4 ${
+              isLightMode ? 'text-gray-500' : 'text-gray-400'
+            }`}>Secciones</h3>
             <div className="space-y-1">
               {SECCIONES.map((sec) => {
                 const Icon = sec.icono;
@@ -375,17 +458,25 @@ export default function NuevoProyectoPage() {
                     onClick={() => setSeccionActiva(sec.id)}
                     className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${
                       isActive
-                        ? 'bg-purple-600/20 border border-purple-500/30 text-white shadow-lg shadow-purple-500/5'
-                        : 'hover:bg-white/5 border border-transparent text-gray-400 hover:text-white'
+                        ? isLightMode
+                          ? 'bg-purple-100 border border-purple-300 text-purple-700 shadow-md shadow-purple-500/5'
+                          : 'bg-purple-600/20 border border-purple-500/30 text-white shadow-lg shadow-purple-500/5'
+                        : isLightMode
+                          ? 'hover:bg-gray-100 border border-transparent text-gray-600 hover:text-gray-900'
+                          : 'hover:bg-white/5 border border-transparent text-gray-400 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-purple-600' : 'text-gray-500'}`} />
                       <span className="text-sm font-semibold tracking-wide text-left">{sec.titulo}</span>
                     </div>
                     {isCompleted && (
-                      <span className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
-                        <Check className="w-3. h-3 text-cyan-400" />
+                      <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                        isLightMode 
+                          ? 'bg-cyan-100 border-cyan-300' 
+                          : 'bg-cyan-500/20 border border-cyan-500/30'
+                      }`}>
+                        <Check className={`w-3 h-3 ${isLightMode ? 'text-cyan-600' : 'text-cyan-400'}`} />
                       </span>
                     )}
                   </button>
@@ -397,12 +488,46 @@ export default function NuevoProyectoPage() {
 
         {/* Content Pane */}
         <section className="md:col-span-3 flex flex-col justify-between">
-          <div className="bg-[#11111e]/40 border border-purple-500/10 rounded-3xl p-8 backdrop-blur-md shadow-2xl relative min-h-[500px] flex flex-col justify-between">
+          <div className={`border rounded-3xl p-8 backdrop-blur-md shadow-2xl relative min-h-[500px] flex flex-col justify-between transition-colors duration-300 ${
+            isLightMode 
+              ? 'bg-white border-purple-500/20 text-gray-900 shadow-purple-500/5' 
+              : 'bg-[#11111e]/40 border-purple-500/10 text-white'
+          }`}>
             
-            {success ? (
+            {isSubmitting ? (
               <div className="flex flex-col items-center justify-center flex-1 space-y-6 text-center animate-fade-in py-12">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-400 to-purple-600 flex items-center justify-center border border-cyan-400/40 shadow-2xl shadow-cyan-500/20">
-                  <Sparkles className="w-12 h-12 text-white animate-pulse" />
+                <div className="relative w-56 h-56 rounded-full overflow-hidden border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 flex items-center justify-center bg-black/40">
+                  <video
+                    src="/Animacion_loading.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scale(1.1)', animation: 'spin 12s linear infinite' }}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
+                    {loadingText}
+                  </h2>
+                  <p className="text-gray-400 text-sm max-w-md mx-auto">
+                    El agente inteligente de GenIA está estructurando tus pantallas, bases de datos y accesos. Esto puede tomar unos segundos.
+                  </p>
+                </div>
+              </div>
+            ) : success ? (
+              <div className="flex flex-col items-center justify-center flex-1 space-y-6 text-center animate-fade-in py-12">
+                <div className="relative w-56 h-56 rounded-full overflow-hidden border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 flex items-center justify-center bg-black/40">
+                  <video
+                    src="/Animacion_loading.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scale(1.1)', animation: 'spin 12s linear infinite' }}
+                  />
                 </div>
                 <h2 className="text-4xl font-extrabold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                   ¡Negocio Configurado!
@@ -411,7 +536,6 @@ export default function NuevoProyectoPage() {
                   El agente inteligente de GenIA está estructurando tus pantallas, bases de datos y accesos.
                   Redireccionando a tu panel de control...
                 </p>
-                <div className="w-12 h-12 border-4 border-t-purple-500 border-purple-500/20 rounded-full animate-spin"></div>
               </div>
             ) : (
               <>
@@ -420,42 +544,77 @@ export default function NuevoProyectoPage() {
                   {/* SECCIÓN 1: Tipo de negocio */}
                   {seccionActiva === 1 && (
                     <div className="space-y-6">
-                      <div>
-                        <h2 className="text-2xl font-bold tracking-wide">¿Cuál es tu tipo de negocio?</h2>
-                        <p className="text-gray-400 text-sm">Selecciona la industria o tipo que mejor describa tu negocio principal.</p>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {[
-                          'Barbería', 'Estética', 'Gimnasio', 'Restaurante', 'Cafetería',
-                          'Veterinaria', 'Consultorio médico', 'Consultorio dental',
-                          'Taller mecánico', 'Tienda de ropa', 'Ferretería',
-                          'Papelería', 'Farmacia', 'Escuela', 'Otro'
-                        ].map((neg) => (
-                          <button
-                            key={neg}
-                            onClick={() => {
-                              setTipoNegocio(neg);
-                              if (neg !== 'Otro') setOtroTipoNegocio('');
-                            }}
-                            className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${
-                              tipoNegocio === neg
-                                ? 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 shadow-xl shadow-purple-500/10'
-                                : 'bg-[#18182a]/50 border-white/5 hover:border-white/10 hover:bg-[#1a1a32]/70'
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className={`text-base font-bold tracking-wide ${
+                            isLightMode ? 'text-gray-700' : 'text-gray-200'
+                          }`}>
+                            Nombre de tu negocio
+                          </label>
+                          <input
+                            type="text"
+                            value={nombreNegocio}
+                            onChange={(e) => setNombreNegocio(e.target.value)}
+                            placeholder="Ej. Barbería El Vikingo, Pets & Co..."
+                            className={`w-full max-w-lg px-4 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-500 ${
+                              isLightMode 
+                                ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400' 
+                                : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
                             }`}
-                          >
-                            {neg}
-                          </button>
-                        ))}
+                          />
+                        </div>
                       </div>
+
+                      <div className="border-t border-purple-500/10 pt-4">
+                        <h2 className="text-2xl font-bold tracking-wide">¿Cuál es tu tipo de negocio?</h2>
+                        <p className={`text-sm mb-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                          Selecciona la industria o tipo que mejor describa tu negocio principal.
+                        </p>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {[
+                            'Barbería', 'Estética', 'Gimnasio', 'Restaurante', 'Cafetería',
+                            'Veterinaria', 'Consultorio médico', 'Consultorio dental',
+                            'Taller mecánico', 'Tienda de ropa', 'Ferretería',
+                            'Papelería', 'Farmacia', 'Escuela', 'Otro'
+                          ].map((neg) => (
+                            <button
+                              key={neg}
+                              onClick={() => {
+                                setTipoNegocio(neg);
+                                if (neg !== 'Otro') setOtroTipoNegocio('');
+                              }}
+                              className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${
+                                tipoNegocio === neg
+                                  ? isLightMode
+                                    ? 'bg-purple-50 border-purple-400 text-purple-700 shadow-md shadow-purple-500/5'
+                                    : 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 shadow-xl shadow-purple-500/10'
+                                  : isLightMode
+                                    ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
+                                    : 'bg-[#18182a]/50 border-white/5 hover:border-white/10 hover:bg-[#1a1a32]/70'
+                              }`}
+                            >
+                                {neg}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {tipoNegocio === 'Otro' && (
                         <div className="space-y-2">
-                          <label className="text-sm font-semibold text-gray-300">Escribe el tipo de negocio:</label>
+                          <label className={`text-sm font-semibold ${isLightMode ? 'text-gray-600' : 'text-gray-300'}`}>
+                            Escribe el tipo de negocio:
+                          </label>
                           <input
                             type="text"
                             value={otroTipoNegocio}
                             onChange={(e) => setOtroTipoNegocio(e.target.value)}
                             placeholder="Ej. Estudio de tatuajes, Florería..."
-                            className="w-full max-w-md px-4 py-3 bg-[#18182a]/60 border border-purple-500/20 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                            className={`w-full max-w-md px-4 py-3 border rounded-xl focus:outline-none focus:border-purple-500 transition-colors ${
+                              isLightMode 
+                                ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400' 
+                                : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
+                            }`}
                           />
                         </div>
                       )}
@@ -1007,18 +1166,7 @@ export default function NuevoProyectoPage() {
                         <p className="text-gray-400 text-sm">Nuestro agente ha inferido la arquitectura ideal para tu nuevo ERP.</p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Pantallas */}
-                        <div className="p-6 bg-gradient-to-br from-purple-950/20 to-black border border-purple-500/20 rounded-3xl flex items-center gap-4">
-                          <div className="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-2xl flex items-center justify-center">
-                            <Layout className="w-6 h-6 text-purple-400" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-black text-white">{aiInference.screens}</p>
-                            <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Pantallas Autogeneradas</p>
-                          </div>
-                        </div>
-
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Tablas */}
                         <div className="p-6 bg-gradient-to-br from-cyan-950/20 to-black border border-cyan-500/20 rounded-3xl flex items-center gap-4">
                           <div className="w-12 h-12 bg-cyan-500/20 border border-cyan-500/30 rounded-2xl flex items-center justify-center">
@@ -1129,24 +1277,32 @@ export default function NuevoProyectoPage() {
       </main>
 
       {/* Floating Bottom Progress Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 bg-[#07070e]/90 border-t border-blue-500/20 py-3 px-6 backdrop-blur-lg flex items-center justify-between shadow-2xl">
+      <footer className={`fixed bottom-0 left-0 right-0 z-50 py-3 px-6 backdrop-blur-lg flex items-center justify-between shadow-2xl transition-colors duration-300 ${
+        isLightMode 
+          ? 'bg-white/90 border-t border-blue-500/20 text-gray-900 shadow-blue-500/5' 
+          : 'bg-[#07070e]/90 border-t border-blue-500/20 text-white'
+      }`}>
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
           {/* Progress details */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-              <span className="text-xs font-black text-blue-400">{percentage}%</span>
+            <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${
+              isLightMode ? 'bg-blue-100 border-blue-300' : 'bg-blue-500/10 border border-blue-500/30'
+            }`}>
+              <span className={`text-xs font-black ${isLightMode ? 'text-blue-600' : 'text-blue-400'}`}>{percentage}%</span>
             </div>
             <div className="text-left">
               <p className="text-xs text-gray-500 font-medium">Progreso del Formulario</p>
-              <p className="text-sm font-bold text-gray-200">
+              <p className={`text-sm font-bold ${isLightMode ? 'text-gray-800' : 'text-gray-200'}`}>
                 {answeredCount} de {total} preguntas contestadas
               </p>
             </div>
           </div>
 
           {/* Blue progress track */}
-          <div className="flex-1 max-w-xl w-full bg-blue-950/40 border border-blue-500/10 h-3 rounded-full overflow-hidden relative">
+          <div className={`flex-1 max-w-xl w-full h-3 rounded-full overflow-hidden relative border ${
+            isLightMode ? 'bg-gray-100 border-gray-300' : 'bg-blue-950/40 border-blue-500/10'
+          }`}>
             <div
               style={{ width: `${percentage}%` }}
               className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-full transition-all duration-500 shadow-lg shadow-blue-500/40"
@@ -1155,7 +1311,11 @@ export default function NuevoProyectoPage() {
 
           {/* Summary status tag */}
           <div className="hidden sm:block">
-            <span className="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-bold text-blue-400 tracking-wider">
+            <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider border ${
+              isLightMode 
+                ? 'bg-blue-100 border-blue-200 text-blue-600' 
+                : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+            }`}>
               {percentage === 100 ? 'COMPLETADO' : 'EN PROGRESO'}
             </span>
           </div>
