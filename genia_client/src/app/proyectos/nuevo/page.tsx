@@ -308,55 +308,309 @@ export default function NuevoProyectoPage() {
     };
 
     try {
-      const token = localStorage.getItem('token');
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      
-      const response = await fetch(`${backendUrl}/proyecto/crear`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+      // JSON FIJO DE PRUEBA - Simula la respuesta del backend
+      const mockERPData = {
+        "dashboard": {
+          "nombre": nombreNegocio || "Mi Negocio",
+          "idioma": "es",
+          "moneda": "MXN",
+          "zona_horaria": "America/Mexico_City",
+          "formato_fecha": "DD/MM/YYYY"
         },
-        body: JSON.stringify(payload)
-      });
+        "estilos": [
+          {
+            "nombre": "Tema Principal",
+            "tema": "dark",
+            "color_primario": "#8b5cf6",
+            "color_secundario": "#1e293b",
+            "color_acento": "#22c55e",
+            "fuente": "Inter",
+            "activo": true
+          }
+        ],
+        "tablas": [
+          {
+            "nombre": "clientes",
+            "etiqueta": "Clientes",
+            "icono": "users",
+            "orden": 1,
+            "columnas": [
+              {
+                "nombre": "nombre_completo",
+                "etiqueta": "Nombre Completo",
+                "tipo_dato": "string",
+                "requerido": true,
+                "unico": false,
+                "max_length": 150,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": true,
+                "tabla_busqueda": null,
+                "orden": 1,
+                "ancho": "full",
+                "input_type": "text",
+                "icono": "user",
+                "placeholder": "Ej: Juan Pérez",
+                "clase_css": null
+              },
+              {
+                "nombre": "email",
+                "etiqueta": "Correo Electrónico",
+                "tipo_dato": "email",
+                "requerido": true,
+                "unico": true,
+                "max_length": 200,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+                "condicion_visible": null,
+                "busqueda_habilitada": true,
+                "tabla_busqueda": null,
+                "orden": 2,
+                "ancho": "half",
+                "input_type": "email",
+                "icono": "mail",
+                "placeholder": "cliente@correo.com",
+                "clase_css": null
+              },
+              {
+                "nombre": "telefono",
+                "etiqueta": "Teléfono",
+                "tipo_dato": "phone",
+                "requerido": true,
+                "unico": false,
+                "max_length": 15,
+                "mascara": "(##) ####-####",
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": "^[0-9]{10}$",
+                "condicion_visible": null,
+                "busqueda_habilitada": false,
+                "tabla_busqueda": null,
+                "orden": 3,
+                "ancho": "half",
+                "input_type": "tel",
+                "icono": "phone",
+                "placeholder": "(55) 1234-5678",
+                "clase_css": null
+              },
+              {
+                "nombre": "fecha_registro",
+                "etiqueta": "Fecha de Registro",
+                "tipo_dato": "date",
+                "requerido": true,
+                "unico": false,
+                "max_length": null,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": false,
+                "tabla_busqueda": null,
+                "orden": 4,
+                "ancho": "half",
+                "input_type": "date",
+                "icono": "calendar",
+                "placeholder": null,
+                "clase_css": null
+              }
+            ],
+            "filas": [
+              {
+                "orden": 1,
+                "datos": {
+                  "nombre_completo": "Juan Pérez García",
+                  "email": "juan.perez@correo.com",
+                  "telefono": "5512345678",
+                  "fecha_registro": "2025-01-15"
+                }
+              },
+              {
+                "orden": 2,
+                "datos": {
+                  "nombre_completo": "María López Hernández",
+                  "email": "maria.lopez@correo.com",
+                  "telefono": "5598765432",
+                  "fecha_registro": "2025-02-20"
+                }
+              },
+              {
+                "orden": 3,
+                "datos": {
+                  "nombre_completo": "Carlos Méndez Ruiz",
+                  "email": "carlos.mendez@correo.com",
+                  "telefono": "5545612378",
+                  "fecha_registro": "2025-03-10"
+                }
+              }
+            ],
+            "relaciones": []
+          },
+          {
+            "nombre": "productos",
+            "etiqueta": "Productos",
+            "icono": "package",
+            "orden": 2,
+            "columnas": [
+              {
+                "nombre": "nombre",
+                "etiqueta": "Nombre del Producto",
+                "tipo_dato": "string",
+                "requerido": true,
+                "unico": true,
+                "max_length": 200,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": true,
+                "tabla_busqueda": null,
+                "orden": 1,
+                "ancho": "full",
+                "input_type": "text",
+                "icono": "shopping-bag",
+                "placeholder": "Ej: Producto Premium",
+                "clase_css": null
+              },
+              {
+                "nombre": "precio",
+                "etiqueta": "Precio",
+                "tipo_dato": "decimal",
+                "requerido": true,
+                "unico": false,
+                "max_length": null,
+                "mascara": "$ #,##0.00",
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": null,
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": false,
+                "tabla_busqueda": null,
+                "orden": 2,
+                "ancho": "third",
+                "input_type": "number",
+                "icono": "dollar-sign",
+                "placeholder": "999.00",
+                "clase_css": null
+              },
+              {
+                "nombre": "stock",
+                "etiqueta": "Stock",
+                "tipo_dato": "integer",
+                "requerido": true,
+                "unico": false,
+                "max_length": null,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": "0",
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": false,
+                "tabla_busqueda": null,
+                "orden": 3,
+                "ancho": "third",
+                "input_type": "number",
+                "icono": "package-check",
+                "placeholder": "50",
+                "clase_css": null
+              },
+              {
+                "nombre": "disponible",
+                "etiqueta": "Disponible",
+                "tipo_dato": "boolean",
+                "requerido": false,
+                "unico": false,
+                "max_length": null,
+                "mascara": null,
+                "valores_permitidos": null,
+                "multivalor": false,
+                "valor_defecto": "true",
+                "expresion_regular": null,
+                "condicion_visible": null,
+                "busqueda_habilitada": false,
+                "tabla_busqueda": null,
+                "orden": 4,
+                "ancho": "third",
+                "input_type": "switch",
+                "icono": "toggle-left",
+                "placeholder": null,
+                "clase_css": null
+              }
+            ],
+            "filas": [
+              {
+                "orden": 1,
+                "datos": {
+                  "nombre": "Producto A",
+                  "precio": "299.00",
+                  "stock": "50",
+                  "disponible": "true"
+                }
+              },
+              {
+                "orden": 2,
+                "datos": {
+                  "nombre": "Producto B",
+                  "precio": "599.00",
+                  "stock": "30",
+                  "disponible": "true"
+                }
+              },
+              {
+                "orden": 3,
+                "datos": {
+                  "nombre": "Producto C",
+                  "precio": "899.00",
+                  "stock": "0",
+                  "disponible": "false"
+                }
+              }
+            ],
+            "relaciones": []
+          }
+        ]
+      };
 
-      const resData = await response.json();
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Guardar los datos del ERP generado en localStorage para el preview
+      localStorage.setItem('currentERPData', JSON.stringify(mockERPData));
       
-      // Guardar el proyecto devuelto en localStorage (independientemente si viene de base de datos o mockup del backend)
+      // También guardar el proyecto en la lista de proyectos
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
-      localProyectos.push(resData.data || {
+      const newProject = {
         id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: nombreNegocio || `Mi ${payload.tipo_negocio}`,
+        nombre_negocio: nombreNegocio || mockERPData.dashboard.nombre,
         configuracion: payload,
-        created_at: new Date().toISOString()
-      });
-      localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-
-      setSuccess(true);
-      setTimeout(() => {
-        router.push('/proyectos');
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error al guardar el proyecto en el servidor:', error);
-      
-      // Fallback local: Guardar en localStorage de todos modos para que el hackathon funcione sin internet/backend local
-      const localProyectosStr = localStorage.getItem('proyectos') || '[]';
-      const localProyectos = JSON.parse(localProyectosStr);
-      const mockProject = {
-        id: 'local-' + Math.random().toString(36).substring(2, 9),
-        nombre_negocio: nombreNegocio || `Mi ${payload.tipo_negocio}`,
-        configuracion: payload,
+        erp_data: mockERPData,
         created_at: new Date().toISOString()
       };
-      localProyectos.push(mockProject);
+      localProyectos.push(newProject);
       localStorage.setItem('proyectos', JSON.stringify(localProyectos));
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/proyectos');
-      }, 3000);
+        router.push('/proyectos/preview');
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error al generar el ERP:', error);
+      alert('Hubo un error al generar el ERP. Por favor, intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
