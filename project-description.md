@@ -104,4 +104,4 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 ---
 
-Proyecto desarrollado para el **Platanus Hack 26: CDMX** — Track Legacy por el equipo 15.
+Proyecto desarrollado para el **Platanus Hack 26: CDMX** — Track Legacy por el equipo 15 (GenIA).
