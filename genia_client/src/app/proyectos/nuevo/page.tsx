@@ -71,7 +71,7 @@ export default function NuevoProyectoPage() {
   const [tipoNegocio, setTipoNegocio] = useState('');
   const [otroTipoNegocio, setOtroTipoNegocio] = useState('');
   const [tamano, setTamano] = useState({ num_empleados: '', num_sucursales: '' });
-  
+
   const [operacion, setOperacion] = useState<{
     atiende_clientes: boolean | null;
     vende_productos: boolean | null;
@@ -91,7 +91,7 @@ export default function NuevoProyectoPage() {
   });
 
   const [modulosDeseados, setModulosDeseados] = useState<string[]>([]);
-  
+
   const [flujo, setFlujo] = useState({
     clientes: { registro_actual: '', info_guardada: [] as string[] },
     inventario: { controla: [] as string[], alertas_bajo_stock: null as boolean | null },
@@ -123,12 +123,12 @@ export default function NuevoProyectoPage() {
     setMounted(true);
     const userStr = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    
+
     if (!userStr || !token) {
       router.replace('/');
       return;
     }
-    
+
     try {
       setUsuario(JSON.parse(userStr));
     } catch (e) {
@@ -211,9 +211,9 @@ export default function NuevoProyectoPage() {
   // Calcular la inferencia de IA en la sección 8
   const getInferredAI = () => {
     const totalModules = modulosDeseados.length;
-    
+
     // Screens logic
-    let screens = 5; 
+    let screens = 5;
     if (totalModules > 0) screens += totalModules * 1;
     if (tecnologia.acceso_remoto) screens += 1;
     if (datosExistentes.tiene_datos && datosExistentes.tiene_datos !== 'No') screens += 1;
@@ -247,25 +247,29 @@ export default function NuevoProyectoPage() {
     }
   };
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files) return;
-    const loadedFiles: typeof datosExistentes.archivos = [];
+  const [excelFile, setExcelFile] = useState<File | null>(null);
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        loadedFiles.push({
-          nombre: file.name,
-          tamaño: (file.size / 1024).toFixed(1) + ' KB',
-          base64: reader.result as string
-        });
-        setDatosExistentes(prev => ({
-          ...prev,
-          archivos: [...prev.archivos, ...loadedFiles]
-        }));
-      };
-    });
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0]; // por ahora un solo Excel a la vez
+
+    setExcelFile(file);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setDatosExistentes(prev => ({
+        ...prev,
+        archivos: [
+          ...prev.archivos,
+          {
+            nombre: file.name,
+            tamaño: (file.size / 1024).toFixed(1) + ' KB',
+            base64: reader.result as string
+          }
+        ]
+      }));
+    };
   };
 
   const removeFile = (index: number) => {
@@ -273,6 +277,7 @@ export default function NuevoProyectoPage() {
       ...prev,
       archivos: prev.archivos.filter((_, i) => i !== index)
     }));
+    setExcelFile(null);
   };
 
   const handleNextSection = () => {
@@ -456,23 +461,8 @@ export default function NuevoProyectoPage() {
 
     const tipoFinal = tipoNegocio === 'Otro' ? otroTipoNegocio : tipoNegocio;
     const nombreFinal = nombreNegocio || `Mi ${tipoFinal || 'Negocio'}`;
-
-    const formPayload = {
-      nombre_negocio: nombreFinal,
-      tipo_negocio: tipoFinal,
-      tamano,
-      operacion,
-      modulos_deseados: modulosDeseados,
-      flujo: {
-        clientes: modulosDeseados.includes('Clientes') ? flujo.clientes : undefined,
-        inventario: modulosDeseados.includes('Inventario') ? flujo.inventario : undefined,
-        citas: modulosDeseados.includes('Citas') ? flujo.citas : undefined,
-        empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined,
-      },
-      tecnologia,
-      datos_existentes: datosExistentes,
-      base_de_datos_existente: null,
-    };
+    const token = localStorage.getItem('token');
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
     // Construir tablas dinámicamente según los módulos elegidos
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -480,22 +470,19 @@ export default function NuevoProyectoPage() {
       .map((mod, idx) => buildTablaForModulo(mod, idx + 1))
       .filter(Boolean);
 
-    // Si no seleccionó módulos mapeados, agregar tabla genérica
     if (tablas.length === 0) {
       tablas.push({
         nombre: 'registros', etiqueta: 'Registros', icono: 'table',
         orden: 1, filas: [], relaciones: [],
-        columnas: [
-          {
-            nombre: 'descripcion', etiqueta: 'Descripción', tipo_dato: 'string',
-            requerido: true, unico: false, max_length: 300 as number | null, mascara: null,
-            valores_permitidos: null, multivalor: false, valor_defecto: null,
-            expresion_regular: null, condicion_visible: null,
-            busqueda_habilitada: true, tabla_busqueda: null,
-            orden: 1, ancho: 'full', input_type: 'text',
-            icono: null, placeholder: 'Ingresa una descripción' as string | null, clase_css: null,
-          },
-        ],
+        columnas: [{
+          nombre: 'descripcion', etiqueta: 'Descripción', tipo_dato: 'string',
+          requerido: true, unico: false, max_length: 300 as number | null, mascara: null,
+          valores_permitidos: null, multivalor: false, valor_defecto: null,
+          expresion_regular: null, condicion_visible: null,
+          busqueda_habilitada: true, tabla_busqueda: null,
+          orden: 1, ancho: 'full', input_type: 'text',
+          icono: null, placeholder: 'Ingresa una descripción' as string | null, clase_css: null,
+        }],
       });
     }
 
@@ -520,9 +507,38 @@ export default function NuevoProyectoPage() {
     };
 
     try {
-      const token = localStorage.getItem('token');
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      // Paso 1: si hay Excel, procesar primero y adjuntar resultado al payload
+      let conversionResultado = null;
+      if (excelFile) {
+        const formData = new FormData();
+        formData.append('archivo', excelFile);
+        const excelRes = await fetch(`${backendUrl}/sistema/conversion-Excel`, {
+          method: 'POST',
+          headers: { 'Authorization': token ? `Bearer ${token}` : '' },
+          body: formData,
+        });
+        if (!excelRes.ok) throw new Error('No se pudo procesar el archivo Excel.');
+        conversionResultado = await excelRes.json();
+      }
 
+      const formPayload = {
+        nombre_negocio: nombreFinal,
+        tipo_negocio: tipoFinal,
+        tamano,
+        operacion,
+        modulos_deseados: modulosDeseados,
+        flujo: {
+          clientes: modulosDeseados.includes('Clientes') ? flujo.clientes : undefined,
+          inventario: modulosDeseados.includes('Inventario') ? flujo.inventario : undefined,
+          citas: modulosDeseados.includes('Citas') ? flujo.citas : undefined,
+          empleados: modulosDeseados.includes('Empleados') ? flujo.empleados : undefined,
+        },
+        tecnologia,
+        datos_existentes: { ...datosExistentes, conversion: conversionResultado },
+        base_de_datos_existente: null,
+      };
+
+      // Paso 2: crear dashboard en Supabase
       const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
         method: 'POST',
         headers: {
@@ -535,9 +551,8 @@ export default function NuevoProyectoPage() {
       const data = await response.json();
 
       if (data.ok && data.resumen?.dashboard_id) {
-        // ✅ Éxito: redirigir al dashboard operativo
+        // ✅ Éxito: guardar referencia y redirigir al dashboard operativo
         const dashboardId = data.resumen.dashboard_id;
-
         const localProyectosStr = localStorage.getItem('proyectos') || '[]';
         const localProyectos = JSON.parse(localProyectosStr);
         localProyectos.push({
@@ -548,7 +563,6 @@ export default function NuevoProyectoPage() {
           created_at: new Date().toISOString(),
         });
         localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-
         setSuccess(true);
         setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
       } else {
@@ -557,21 +571,21 @@ export default function NuevoProyectoPage() {
     } catch (apiError) {
       // ⚠️ Fallback: guardar en localStorage y redirigir al preview estático
       console.warn('API no disponible, usando modo local:', apiError);
-
       localStorage.setItem('currentERPData', JSON.stringify(inyeccionPayload));
-
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
-      const localId = 'local-' + Math.random().toString(36).substring(2, 9);
       localProyectos.push({
-        id: localId,
+        id: 'local-' + Math.random().toString(36).substring(2, 9),
         nombre_negocio: nombreFinal,
-        configuracion: formPayload,
+        configuracion: {
+          tipo_negocio: tipoFinal, tamano, operacion,
+          modulos_deseados: modulosDeseados, flujo, tecnologia,
+          datos_existentes: datosExistentes,
+        },
         erp_data: inyeccionPayload,
         created_at: new Date().toISOString(),
       });
       localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-
       setSuccess(true);
       setTimeout(() => router.push('/proyectos/preview'), 1000);
     } finally {
@@ -582,24 +596,21 @@ export default function NuevoProyectoPage() {
   if (!mounted) return null;
 
   return (
-    <div className={`min-h-screen w-full flex flex-col pb-24 transition-colors duration-300 ${
-      isLightMode 
-        ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900' 
-        : 'bg-gradient-to-b from-[#0a0a0a] via-[#121224] to-[#0a0a0a] text-white'
-    }`}>
-      {/* Header */}
-      <header className={`border-b sticky top-0 z-40 transition-colors duration-300 ${
-        isLightMode 
-          ? 'border-gray-200 bg-white/80 backdrop-blur-md' 
-          : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+    <div className={`min-h-screen w-full flex flex-col pb-24 transition-colors duration-300 ${isLightMode
+      ? 'bg-gradient-to-b from-[#f9fafb] via-[#f3f4f6] to-[#f9fafb] text-gray-900'
+      : 'bg-gradient-to-b from-[#0a0a0a] via-[#121224] to-[#0a0a0a] text-white'
       }`}>
+      {/* Header */}
+      <header className={`border-b sticky top-0 z-40 transition-colors duration-300 ${isLightMode
+        ? 'border-gray-200 bg-white/80 backdrop-blur-md'
+        : 'border-purple-500/10 bg-[#0a0a0a]/80 backdrop-blur-md'
+        }`}>
         <div className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/proyectos')}
-              className={`flex items-center gap-2 transition-colors ${
-                isLightMode ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 transition-colors ${isLightMode ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'
+                }`}
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Panel</span>
@@ -611,11 +622,10 @@ export default function NuevoProyectoPage() {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-xl border transition-all ${
-                isLightMode 
-                  ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200' 
-                  : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
-              }`}
+              className={`p-2 rounded-xl border transition-all ${isLightMode
+                ? 'bg-purple-100 border-purple-200 text-purple-600 hover:bg-purple-200'
+                : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20'
+                }`}
               title="Cambiar tema"
             >
               {isLightMode ? (
@@ -643,17 +653,15 @@ export default function NuevoProyectoPage() {
 
       {/* Main Grid */}
       <main className="w-full max-w-7xl mx-auto px-6 py-8 flex-1 grid grid-cols-1 md:grid-cols-4 gap-8">
-        
+
         {/* Sidebar Navigation */}
         <aside className="md:col-span-1 space-y-3 animate-fade-in">
-          <div className={`border rounded-2xl p-5 backdrop-blur-md sticky top-24 transition-colors duration-300 ${
-            isLightMode 
-              ? 'bg-white border-purple-500/20 shadow-md shadow-purple-500/5' 
-              : 'bg-[#11111e]/60 border-purple-500/10'
-          }`}>
-            <h3 className={`text-sm font-bold tracking-wider uppercase mb-4 ${
-              isLightMode ? 'text-gray-500' : 'text-gray-400'
-            }`}>Secciones</h3>
+          <div className={`border rounded-2xl p-5 backdrop-blur-md sticky top-24 transition-colors duration-300 ${isLightMode
+            ? 'bg-white border-purple-500/20 shadow-md shadow-purple-500/5'
+            : 'bg-[#11111e]/60 border-purple-500/10'
+            }`}>
+            <h3 className={`text-sm font-bold tracking-wider uppercase mb-4 ${isLightMode ? 'text-gray-500' : 'text-gray-400'
+              }`}>Secciones</h3>
             <div className="space-y-1">
               {SECCIONES.map((sec) => {
                 const Icon = sec.icono;
@@ -673,26 +681,24 @@ export default function NuevoProyectoPage() {
                   <button
                     key={sec.id}
                     onClick={() => setSeccionActiva(sec.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${
-                      isActive
-                        ? isLightMode
-                          ? 'bg-purple-100 border border-purple-300 text-purple-700 shadow-md shadow-purple-500/5'
-                          : 'bg-purple-600/20 border border-purple-500/30 text-white shadow-lg shadow-purple-500/5'
-                        : isLightMode
-                          ? 'hover:bg-gray-100 border border-transparent text-gray-600 hover:text-gray-900'
-                          : 'hover:bg-white/5 border border-transparent text-gray-400 hover:text-white'
-                    }`}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${isActive
+                      ? isLightMode
+                        ? 'bg-purple-100 border border-purple-300 text-purple-700 shadow-md shadow-purple-500/5'
+                        : 'bg-purple-600/20 border border-purple-500/30 text-white shadow-lg shadow-purple-500/5'
+                      : isLightMode
+                        ? 'hover:bg-gray-100 border border-transparent text-gray-600 hover:text-gray-900'
+                        : 'hover:bg-white/5 border border-transparent text-gray-400 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className={`w-5 h-5 ${isActive ? 'text-purple-600' : 'text-gray-500'}`} />
                       <span className="text-sm font-semibold tracking-wide text-left">{sec.titulo}</span>
                     </div>
                     {isCompleted && (
-                      <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                        isLightMode 
-                          ? 'bg-cyan-100 border-cyan-300' 
-                          : 'bg-cyan-500/20 border border-cyan-500/30'
-                      }`}>
+                      <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${isLightMode
+                        ? 'bg-cyan-100 border-cyan-300'
+                        : 'bg-cyan-500/20 border border-cyan-500/30'
+                        }`}>
                         <Check className={`w-3 h-3 ${isLightMode ? 'text-cyan-600' : 'text-cyan-400'}`} />
                       </span>
                     )}
@@ -705,12 +711,11 @@ export default function NuevoProyectoPage() {
 
         {/* Content Pane */}
         <section className="md:col-span-3 flex flex-col justify-between">
-          <div className={`border rounded-3xl p-8 backdrop-blur-md shadow-2xl relative min-h-[500px] flex flex-col justify-between transition-colors duration-300 ${
-            isLightMode 
-              ? 'bg-white border-purple-500/20 text-gray-900 shadow-purple-500/5' 
-              : 'bg-[#11111e]/40 border-purple-500/10 text-white'
-          }`}>
-            
+          <div className={`border rounded-3xl p-8 backdrop-blur-md shadow-2xl relative min-h-[500px] flex flex-col justify-between transition-colors duration-300 ${isLightMode
+            ? 'bg-white border-purple-500/20 text-gray-900 shadow-purple-500/5'
+            : 'bg-[#11111e]/40 border-purple-500/10 text-white'
+            }`}>
+
             {isSubmitting ? (
               <div className="flex flex-col items-center justify-center flex-1 space-y-6 text-center animate-fade-in py-12">
                 <div className="relative w-56 h-56 rounded-full overflow-hidden border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 flex items-center justify-center bg-black/40">
@@ -763,9 +768,8 @@ export default function NuevoProyectoPage() {
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className={`text-base font-bold tracking-wide ${
-                            isLightMode ? 'text-gray-700' : 'text-gray-200'
-                          }`}>
+                          <label className={`text-base font-bold tracking-wide ${isLightMode ? 'text-gray-700' : 'text-gray-200'
+                            }`}>
                             Nombre de tu negocio
                           </label>
                           <input
@@ -773,11 +777,10 @@ export default function NuevoProyectoPage() {
                             value={nombreNegocio}
                             onChange={(e) => setNombreNegocio(e.target.value)}
                             placeholder="Ej. Barbería El Vikingo, Pets & Co..."
-                            className={`w-full max-w-lg px-4 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-500 ${
-                              isLightMode 
-                                ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400' 
-                                : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
-                            }`}
+                            className={`w-full max-w-lg px-4 py-3 border rounded-xl transition-colors focus:outline-none focus:border-purple-500 ${isLightMode
+                              ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                              : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
+                              }`}
                           />
                         </div>
                       </div>
@@ -787,7 +790,7 @@ export default function NuevoProyectoPage() {
                         <p className={`text-sm mb-4 ${isLightMode ? 'text-gray-600' : 'text-gray-400'}`}>
                           Selecciona la industria o tipo que mejor describa tu negocio principal.
                         </p>
-                        
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                           {[
                             'Barbería', 'Estética', 'Gimnasio', 'Restaurante', 'Cafetería',
@@ -801,17 +804,16 @@ export default function NuevoProyectoPage() {
                                 setTipoNegocio(neg);
                                 if (neg !== 'Otro') setOtroTipoNegocio('');
                               }}
-                              className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${
-                                tipoNegocio === neg
-                                  ? isLightMode
-                                    ? 'bg-purple-50 border-purple-400 text-purple-700 shadow-md shadow-purple-500/5'
-                                    : 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 shadow-xl shadow-purple-500/10'
-                                  : isLightMode
-                                    ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
-                                    : 'bg-[#18182a]/50 border-white/5 hover:border-white/10 hover:bg-[#1a1a32]/70'
-                              }`}
+                              className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${tipoNegocio === neg
+                                ? isLightMode
+                                  ? 'bg-purple-50 border-purple-400 text-purple-700 shadow-md shadow-purple-500/5'
+                                  : 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 shadow-xl shadow-purple-500/10'
+                                : isLightMode
+                                  ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
+                                  : 'bg-[#18182a]/50 border-white/5 hover:border-white/10 hover:bg-[#1a1a32]/70'
+                                }`}
                             >
-                                {neg}
+                              {neg}
                             </button>
                           ))}
                         </div>
@@ -827,11 +829,10 @@ export default function NuevoProyectoPage() {
                             value={otroTipoNegocio}
                             onChange={(e) => setOtroTipoNegocio(e.target.value)}
                             placeholder="Ej. Estudio de tatuajes, Florería..."
-                            className={`w-full max-w-md px-4 py-3 border rounded-xl focus:outline-none focus:border-purple-500 transition-colors ${
-                              isLightMode 
-                                ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400' 
-                                : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
-                            }`}
+                            className={`w-full max-w-md px-4 py-3 border rounded-xl focus:outline-none focus:border-purple-500 transition-colors ${isLightMode
+                              ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
+                              : 'bg-[#18182a]/60 border-purple-500/20 text-white placeholder-gray-500'
+                              }`}
                           />
                         </div>
                       )}
@@ -854,11 +855,10 @@ export default function NuevoProyectoPage() {
                             <button
                               key={op}
                               onClick={() => setTamano({ ...tamano, num_empleados: op })}
-                              className={`p-3 rounded-xl border text-sm font-medium tracking-wide transition-all ${
-                                tamano.num_empleados === op
-                                  ? 'bg-purple-600/30 border-purple-500 text-white'
-                                  : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                              }`}
+                              className={`p-3 rounded-xl border text-sm font-medium tracking-wide transition-all ${tamano.num_empleados === op
+                                ? 'bg-purple-600/30 border-purple-500 text-white'
+                                : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                }`}
                             >
                               {op}
                             </button>
@@ -874,11 +874,10 @@ export default function NuevoProyectoPage() {
                             <button
                               key={op}
                               onClick={() => setTamano({ ...tamano, num_sucursales: op })}
-                              className={`p-3 rounded-xl border text-sm font-medium tracking-wide transition-all ${
-                                tamano.num_sucursales === op
-                                  ? 'bg-cyan-600/30 border-cyan-500 text-white'
-                                  : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                              }`}
+                              className={`p-3 rounded-xl border text-sm font-medium tracking-wide transition-all ${tamano.num_sucursales === op
+                                ? 'bg-cyan-600/30 border-cyan-500 text-white'
+                                : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                }`}
                             >
                               {op}
                             </button>
@@ -913,21 +912,19 @@ export default function NuevoProyectoPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setOperacion({ ...operacion, [op.key]: true })}
-                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                                  operacion[op.key as keyof typeof operacion] === true
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-500 text-white shadow-lg shadow-purple-500/20'
-                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${operacion[op.key as keyof typeof operacion] === true
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-500 text-white shadow-lg shadow-purple-500/20'
+                                  : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
+                                  }`}
                               >
                                 Sí
                               </button>
                               <button
                                 onClick={() => setOperacion({ ...operacion, [op.key]: false })}
-                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                                  operacion[op.key as keyof typeof operacion] === false
-                                    ? 'bg-white/10 border-white/20 text-white'
-                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${operacion[op.key as keyof typeof operacion] === false
+                                  ? 'bg-white/10 border-white/20 text-white'
+                                  : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
+                                  }`}
                               >
                                 No
                               </button>
@@ -956,11 +953,10 @@ export default function NuevoProyectoPage() {
                             <button
                               key={mod}
                               onClick={() => toggleModulo(mod)}
-                              className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${
-                                isSelected
-                                  ? 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 text-white shadow-xl shadow-purple-500/10'
-                                  : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                              }`}
+                              className={`p-4 rounded-2xl border text-center font-medium tracking-wide transition-all ${isSelected
+                                ? 'bg-gradient-to-br from-purple-600/30 to-cyan-600/30 border-purple-500 text-white shadow-xl shadow-purple-500/10'
+                                : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                }`}
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <span className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-purple-400 bg-purple-500' : 'border-gray-500'}`}>
@@ -1005,11 +1001,10 @@ export default function NuevoProyectoPage() {
                                   <button
                                     key={op}
                                     onClick={() => setFlujo({ ...flujo, clientes: { ...flujo.clientes, registro_actual: op } })}
-                                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${
-                                      flujo.clientes.registro_actual === op
-                                        ? 'bg-purple-600/30 border-purple-500'
-                                        : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                                    }`}
+                                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${flujo.clientes.registro_actual === op
+                                      ? 'bg-purple-600/30 border-purple-500'
+                                      : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                      }`}
                                   >
                                     {op}
                                   </button>
@@ -1031,11 +1026,10 @@ export default function NuevoProyectoPage() {
                                           : [...flujo.clientes.info_guardada, info];
                                         setFlujo({ ...flujo, clientes: { ...flujo.clientes, info_guardada: newInfo } });
                                       }}
-                                      className={`p-3 rounded-xl border text-sm transition-all ${
-                                        isSelected
-                                          ? 'bg-cyan-600/20 border-cyan-500 text-white'
-                                          : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                                      }`}
+                                      className={`p-3 rounded-xl border text-sm transition-all ${isSelected
+                                        ? 'bg-cyan-600/20 border-cyan-500 text-white'
+                                        : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                        }`}
                                     >
                                       {info}
                                     </button>
@@ -1069,11 +1063,10 @@ export default function NuevoProyectoPage() {
                                           : [...flujo.inventario.controla, op];
                                         setFlujo({ ...flujo, inventario: { ...flujo.inventario, controla: newCtrl } });
                                       }}
-                                      className={`p-3 rounded-xl border text-sm transition-all ${
-                                        isSelected
-                                          ? 'bg-cyan-600/20 border-cyan-500 text-white'
-                                          : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                                      }`}
+                                      className={`p-3 rounded-xl border text-sm transition-all ${isSelected
+                                        ? 'bg-cyan-600/20 border-cyan-500 text-white'
+                                        : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                        }`}
                                     >
                                       {op}
                                     </button>
@@ -1086,21 +1079,19 @@ export default function NuevoProyectoPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => setFlujo({ ...flujo, inventario: { ...flujo.inventario, alertas_bajo_stock: true } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.inventario.alertas_bajo_stock === true
-                                      ? 'bg-purple-600 border-purple-500 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.inventario.alertas_bajo_stock === true
+                                    ? 'bg-purple-600 border-purple-500 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   Sí
                                 </button>
                                 <button
                                   onClick={() => setFlujo({ ...flujo, inventario: { ...flujo.inventario, alertas_bajo_stock: false } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.inventario.alertas_bajo_stock === false
-                                      ? 'bg-white/10 border-white/20 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.inventario.alertas_bajo_stock === false
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   No
                                 </button>
@@ -1132,11 +1123,10 @@ export default function NuevoProyectoPage() {
                                           : [...flujo.citas.metodo_actual, op];
                                         setFlujo({ ...flujo, citas: { ...flujo.citas, metodo_actual: newMet } });
                                       }}
-                                      className={`p-3 rounded-xl border text-sm transition-all ${
-                                        isSelected
-                                          ? 'bg-cyan-600/20 border-cyan-500 text-white'
-                                          : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                                      }`}
+                                      className={`p-3 rounded-xl border text-sm transition-all ${isSelected
+                                        ? 'bg-cyan-600/20 border-cyan-500 text-white'
+                                        : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                        }`}
                                     >
                                       {op}
                                     </button>
@@ -1149,21 +1139,19 @@ export default function NuevoProyectoPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => setFlujo({ ...flujo, citas: { ...flujo.citas, recordatorios_automaticos: true } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.citas.recordatorios_automaticos === true
-                                      ? 'bg-purple-600 border-purple-500 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.citas.recordatorios_automaticos === true
+                                    ? 'bg-purple-600 border-purple-500 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   Sí
                                 </button>
                                 <button
                                   onClick={() => setFlujo({ ...flujo, citas: { ...flujo.citas, recordatorios_automaticos: false } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.citas.recordatorios_automaticos === false
-                                      ? 'bg-white/10 border-white/20 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.citas.recordatorios_automaticos === false
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   No
                                 </button>
@@ -1185,21 +1173,19 @@ export default function NuevoProyectoPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => setFlujo({ ...flujo, empleados: { ...flujo.empleados, control_asistencias: true } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.empleados.control_asistencias === true
-                                      ? 'bg-purple-600 border-purple-500 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.empleados.control_asistencias === true
+                                    ? 'bg-purple-600 border-purple-500 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   Sí
                                 </button>
                                 <button
                                   onClick={() => setFlujo({ ...flujo, empleados: { ...flujo.empleados, control_asistencias: false } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.empleados.control_asistencias === false
-                                      ? 'bg-white/10 border-white/20 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.empleados.control_asistencias === false
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   No
                                 </button>
@@ -1210,21 +1196,19 @@ export default function NuevoProyectoPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => setFlujo({ ...flujo, empleados: { ...flujo.empleados, control_comisiones: true } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.empleados.control_comisiones === true
-                                      ? 'bg-purple-600 border-purple-500 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.empleados.control_comisiones === true
+                                    ? 'bg-purple-600 border-purple-500 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   Sí
                                 </button>
                                 <button
                                   onClick={() => setFlujo({ ...flujo, empleados: { ...flujo.empleados, control_comisiones: false } })}
-                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                    flujo.empleados.control_comisiones === false
-                                      ? 'bg-white/10 border-white/20 text-white'
-                                      : 'bg-[#18182a]/50 border-white/5 text-gray-400'
-                                  }`}
+                                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${flujo.empleados.control_comisiones === false
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400'
+                                    }`}
                                 >
                                   No
                                 </button>
@@ -1258,21 +1242,19 @@ export default function NuevoProyectoPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setTecnologia({ ...tecnologia, [op.key]: true })}
-                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                                  tecnologia[op.key as keyof typeof tecnologia] === true
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-500 text-white'
-                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${tecnologia[op.key as keyof typeof tecnologia] === true
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-500 text-white'
+                                  : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
+                                  }`}
                               >
                                 Sí
                               </button>
                               <button
                                 onClick={() => setTecnologia({ ...tecnologia, [op.key]: false })}
-                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${
-                                  tecnologia[op.key as keyof typeof tecnologia] === false
-                                    ? 'bg-white/10 border-white/20 text-white'
-                                    : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
-                                }`}
+                                className={`px-5 py-2 rounded-xl border text-sm font-semibold transition-all ${tecnologia[op.key as keyof typeof tecnologia] === false
+                                  ? 'bg-white/10 border-white/20 text-white'
+                                  : 'bg-[#18182a]/50 border-white/5 text-gray-400 hover:text-white'
+                                  }`}
                               >
                                 No
                               </button>
@@ -1298,11 +1280,10 @@ export default function NuevoProyectoPage() {
                             <button
                               key={op}
                               onClick={() => setDatosExistentes({ ...datosExistentes, tiene_datos: op })}
-                              className={`p-3 rounded-xl border text-sm font-medium transition-all ${
-                                datosExistentes.tiene_datos === op
-                                  ? 'bg-purple-600/30 border-purple-500 text-white'
-                                  : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
-                              }`}
+                              className={`p-3 rounded-xl border text-sm font-medium transition-all ${datosExistentes.tiene_datos === op
+                                ? 'bg-purple-600/30 border-purple-500 text-white'
+                                : 'bg-[#18182a]/50 border-white/5 hover:border-white/10'
+                                }`}
                             >
                               {op}
                             </button>
@@ -1324,11 +1305,10 @@ export default function NuevoProyectoPage() {
                               setDragOver(false);
                               handleFileUpload(e.dataTransfer.files);
                             }}
-                            className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all ${
-                              dragOver
-                                ? 'border-purple-500 bg-purple-500/10'
-                                : 'border-purple-500/20 hover:border-purple-500/40 bg-[#18182a]/30'
-                            }`}
+                            className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all ${dragOver
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-purple-500/20 hover:border-purple-500/40 bg-[#18182a]/30'
+                              }`}
                           >
                             <input
                               type="file"
@@ -1449,11 +1429,10 @@ export default function NuevoProyectoPage() {
                   <button
                     onClick={handlePrevSection}
                     disabled={seccionActiva === 1}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl border font-bold transition-all text-sm ${
-                      seccionActiva === 1
-                        ? 'opacity-30 cursor-not-allowed border-white/5 text-gray-500'
-                        : 'border-white/10 hover:bg-white/5 text-gray-300'
-                    }`}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl border font-bold transition-all text-sm ${seccionActiva === 1
+                      ? 'opacity-30 cursor-not-allowed border-white/5 text-gray-500'
+                      : 'border-white/10 hover:bg-white/5 text-gray-300'
+                      }`}
                   >
                     <ChevronLeft className="w-4 h-4" />
                     <span>Anterior</span>
@@ -1494,18 +1473,16 @@ export default function NuevoProyectoPage() {
       </main>
 
       {/* Floating Bottom Progress Bar */}
-      <footer className={`fixed bottom-0 left-0 right-0 z-50 py-3 px-6 backdrop-blur-lg flex items-center justify-between shadow-2xl transition-colors duration-300 ${
-        isLightMode 
-          ? 'bg-white/90 border-t border-blue-500/20 text-gray-900 shadow-blue-500/5' 
-          : 'bg-[#07070e]/90 border-t border-blue-500/20 text-white'
-      }`}>
+      <footer className={`fixed bottom-0 left-0 right-0 z-50 py-3 px-6 backdrop-blur-lg flex items-center justify-between shadow-2xl transition-colors duration-300 ${isLightMode
+        ? 'bg-white/90 border-t border-blue-500/20 text-gray-900 shadow-blue-500/5'
+        : 'bg-[#07070e]/90 border-t border-blue-500/20 text-white'
+        }`}>
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          
+
           {/* Progress details */}
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${
-              isLightMode ? 'bg-blue-100 border-blue-300' : 'bg-blue-500/10 border border-blue-500/30'
-            }`}>
+            <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${isLightMode ? 'bg-blue-100 border-blue-300' : 'bg-blue-500/10 border border-blue-500/30'
+              }`}>
               <span className={`text-xs font-black ${isLightMode ? 'text-blue-600' : 'text-blue-400'}`}>{percentage}%</span>
             </div>
             <div className="text-left">
@@ -1517,9 +1494,8 @@ export default function NuevoProyectoPage() {
           </div>
 
           {/* Blue progress track */}
-          <div className={`flex-1 max-w-xl w-full h-3 rounded-full overflow-hidden relative border ${
-            isLightMode ? 'bg-gray-100 border-gray-300' : 'bg-blue-950/40 border-blue-500/10'
-          }`}>
+          <div className={`flex-1 max-w-xl w-full h-3 rounded-full overflow-hidden relative border ${isLightMode ? 'bg-gray-100 border-gray-300' : 'bg-blue-950/40 border-blue-500/10'
+            }`}>
             <div
               style={{ width: `${percentage}%` }}
               className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-full transition-all duration-500 shadow-lg shadow-blue-500/40"
@@ -1528,11 +1504,10 @@ export default function NuevoProyectoPage() {
 
           {/* Summary status tag */}
           <div className="hidden sm:block">
-            <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider border ${
-              isLightMode 
-                ? 'bg-blue-100 border-blue-200 text-blue-600' 
-                : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
-            }`}>
+            <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wider border ${isLightMode
+              ? 'bg-blue-100 border-blue-200 text-blue-600'
+              : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+              }`}>
               {percentage === 100 ? 'COMPLETADO' : 'EN PROGRESO'}
             </span>
           </div>
