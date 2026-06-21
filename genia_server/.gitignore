@@ -45,3 +45,5 @@ yuidoc_times/
 .env.test
 .env.production
 *.env
+node_modules
+.env
