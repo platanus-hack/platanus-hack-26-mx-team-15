@@ -537,39 +537,62 @@ export default function NuevoProyectoPage() {
         base_de_datos_existente: null,
       };
 
-      // Paso 2: crear dashboard en Supabase
-      const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
+      // Paso 2: llamar al agente de IA para generar mockups
+      const erpRes = await fetch(`${backendUrl}/erp/generar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : '',
         },
-        body: JSON.stringify(inyeccionPayload),
+        body: JSON.stringify(formPayload),
       });
 
-      const data = await response.json();
+      if (!erpRes.ok) throw new Error('El agente de IA no pudo generar los mockups');
+      const erpData = await erpRes.json();
 
-      if (data.ok && data.resumen?.dashboard_id) {
-        // ✅ Éxito: guardar referencia y redirigir al dashboard operativo
-        const dashboardId = data.resumen.dashboard_id;
-        const localProyectosStr = localStorage.getItem('proyectos') || '[]';
-        const localProyectos = JSON.parse(localProyectosStr);
-        localProyectos.push({
-          id: dashboardId,
-          dashboard_id: dashboardId,
-          nombre_negocio: nombreFinal,
-          configuracion: formPayload,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('proyectos', JSON.stringify(localProyectos));
-        setSuccess(true);
-        setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
-      } else {
-        throw new Error(data.error || 'El servidor no devolvió un dashboard_id');
-      }
+      if (!erpData.success) throw new Error(erpData.error || 'El agente devolvió un error');
+
+      // Paso 3: guardar el payload de inyección + resultado de IA en localStorage
+      // y redirigir a la página de aprobación de mockups
+      localStorage.setItem('pendingInyeccionPayload', JSON.stringify(inyeccionPayload));
+      localStorage.setItem('pendingERPPreview', JSON.stringify(erpData));
+
+      setSuccess(true);
+      setTimeout(() => router.push('/proyectos/mockup-preview'), 800);
+
     } catch (apiError) {
-      // ⚠️ Fallback: guardar en localStorage y redirigir al preview estático
-      console.warn('API no disponible, usando modo local:', apiError);
+      // ⚠️ Fallback: si la IA falla, insertar directamente en Supabase con tablas hardcodeadas
+      console.warn('Agente no disponible, creando dashboard directamente:', apiError);
+
+      try {
+        const response = await fetch(`${backendUrl}/inyeccion/crear-dashboard`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+          body: JSON.stringify(inyeccionPayload),
+        });
+        const data = await response.json();
+
+        if (data.ok && data.resumen?.dashboard_id) {
+          const dashboardId = data.resumen.dashboard_id;
+          const localProyectosStr = localStorage.getItem('proyectos') || '[]';
+          const localProyectos = JSON.parse(localProyectosStr);
+          localProyectos.push({
+            id: dashboardId, dashboard_id: dashboardId,
+            nombre_negocio: nombreFinal,
+            configuracion: { tipo_negocio: tipoFinal, tamano, operacion, modulos_deseados: modulosDeseados },
+            created_at: new Date().toISOString(),
+          });
+          localStorage.setItem('proyectos', JSON.stringify(localProyectos));
+          setSuccess(true);
+          setTimeout(() => router.push(`/proyectos/${dashboardId}`), 1000);
+          return;
+        }
+      } catch { /* si también falla la inyección, caer al preview local */ }
+
+      // Último recurso: guardar en localStorage y abrir preview estático
       localStorage.setItem('currentERPData', JSON.stringify(inyeccionPayload));
       const localProyectosStr = localStorage.getItem('proyectos') || '[]';
       const localProyectos = JSON.parse(localProyectosStr);
@@ -579,7 +602,6 @@ export default function NuevoProyectoPage() {
         configuracion: {
           tipo_negocio: tipoFinal, tamano, operacion,
           modulos_deseados: modulosDeseados, flujo, tecnologia,
-          // Incluir conversion en el fallback también para consistencia
           datos_existentes: { ...datosExistentes, conversion: null },
         },
         erp_data: inyeccionPayload,

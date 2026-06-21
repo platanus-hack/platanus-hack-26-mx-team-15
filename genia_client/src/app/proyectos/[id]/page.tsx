@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import {
   ArrowLeft, RefreshCw, Sun, Moon,
-  AlertCircle, X, Plus, Database,
+  AlertCircle, X, Plus, Database, Download,
 } from 'lucide-react';
 
 import { useDashboard } from '@/hooks/useDashboard';
@@ -360,8 +360,33 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Derecha: recargar + theme toggle + usuario */}
+          {/* Derecha: descarga JSON + recargar + theme toggle + usuario */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Descargar JSON completo del dashboard */}
+            {dashboard && (
+              <button
+                onClick={() => {
+                  const json = JSON.stringify(dashboard, null, 2);
+                  const blob = new Blob([json], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${dashboard.nombre.replace(/\s+/g, '_')}_config.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all
+                  ${isLightMode
+                    ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                    : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
+                  }`}
+                title="Descargar configuración como JSON"
+              >
+                <Download className="w-3.5 h-3.5" />
+                JSON
+              </button>
+            )}
+
             <button
               onClick={recargar}
               disabled={loading || saving}

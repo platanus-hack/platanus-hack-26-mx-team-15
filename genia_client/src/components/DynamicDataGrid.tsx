@@ -84,6 +84,8 @@ interface DynamicDataGridProps {
   tabla: Tabla;
   isLightMode?: boolean;
   saving?: boolean;
+  /** Si true: oculta gestión de campos, botón "Nuevo" y acciones de fila (edit/delete) */
+  readonly?: boolean;
   onAddFila: () => void;
   onEditFila: (fila: Fila) => void;
   onDeleteFila: (filaId: string) => void;
@@ -98,6 +100,7 @@ export default function DynamicDataGrid({
   tabla,
   isLightMode = false,
   saving = false,
+  readonly = false,
   onAddFila,
   onEditFila,
   onDeleteFila,
@@ -191,21 +194,23 @@ export default function DynamicDataGrid({
             {query && ` de ${tabla.filas.length}`}
           </span>
 
-          {/* Editar campos */}
-          <button
-            onClick={onOpenColumnEditor}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all
-              ${isLightMode
-                ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
-                : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
-              }`}
-            title="Administrar campos"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Campos
-          </button>
+          {/* Editar campos — oculto en modo readonly */}
+          {!readonly && (
+            <button
+              onClick={onOpenColumnEditor}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all
+                ${isLightMode
+                  ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                  : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
+                }`}
+              title="Administrar campos"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Campos
+            </button>
+          )}
 
-          {/* Agregar registro */}
+          {/* Agregar registro — siempre visible (incluso en modo readonly se permite agregar) */}
           <button
             onClick={onAddFila}
             disabled={saving || colsOrdenadas.length === 0}
@@ -297,23 +302,25 @@ export default function DynamicDataGrid({
                       {/* Acciones por fila */}
                       <td className={`${tdClass} text-right`}>
                         <div className="flex items-center justify-end gap-1">
-                          {/* Editar */}
-                          <button
-                            onClick={() => { setConfirmDeleteId(null); onEditFila(fila); }}
-                            disabled={saving}
-                            className={`p-1.5 rounded-lg transition-colors
-                              ${isLightMode
-                                ? 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
-                                : 'text-gray-500 hover:text-purple-400 hover:bg-purple-500/10'
-                              }
-                              disabled:opacity-40 disabled:cursor-not-allowed`}
-                            title="Editar registro"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          {/* Editar — oculto en modo readonly */}
+                          {!readonly && (
+                            <button
+                              onClick={() => { setConfirmDeleteId(null); onEditFila(fila); }}
+                              disabled={saving}
+                              className={`p-1.5 rounded-lg transition-colors
+                                ${isLightMode
+                                  ? 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                                  : 'text-gray-500 hover:text-purple-400 hover:bg-purple-500/10'
+                                }
+                                disabled:opacity-40 disabled:cursor-not-allowed`}
+                              title="Editar registro"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
 
-                          {/* Eliminar — requiere doble click */}
-                          {confirmDeleteId === fila.id ? (
+                          {/* Eliminar — oculto en modo readonly */}
+                          {!readonly && (confirmDeleteId === fila.id ? (
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleDelete(fila.id)}
@@ -346,7 +353,7 @@ export default function DynamicDataGrid({
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                          )}
+                          ))}
                         </div>
                       </td>
                     </tr>

@@ -28,6 +28,46 @@ export type DashboardResumen = Pick<
     tablas: Pick<Tabla, "id" | "nombre" | "etiqueta" | "icono" | "orden">[];
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ERP PREVIEW (AI)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Resultado de la generación de mockups por Claude */
+export interface ERPPreviewResult {
+    analisis: {
+        tipo_negocio: string;
+        resumen: string;
+        modulos_detectados: string[];
+        roles: { nombre: string; permisos: string[] }[];
+    };
+    base_de_datos: {
+        tablas: { nombre: string; campos: string[] }[];
+    };
+    pantallas: { nombre: string; mockup_html: string }[];
+    pregunta_confirmacion: string;
+}
+
+export interface ERPPreviewResponse {
+    success: boolean;
+    data: ERPPreviewResult;
+    preview_html: string;
+}
+
+/**
+ * Llama al agente Claude para generar mockups HTML del ERP basado en el formulario.
+ * POST /erp/generar
+ * No requiere auth (el endpoint es público).
+ */
+export const generateERPPreview = async (
+    formPayload: Record<string, unknown>
+): Promise<ERPPreviewResponse> => {
+    const res = await api.post<ERPPreviewResponse>("/erp/generar", formPayload);
+    if (!res.data.success) {
+        throw new Error("El agente no pudo generar los mockups");
+    }
+    return res.data;
+};
+
 /**
  * Lista todos los dashboards del usuario autenticado (resumen, sin columnas/filas).
  * GET /dashboard

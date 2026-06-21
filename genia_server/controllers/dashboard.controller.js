@@ -43,7 +43,19 @@ export const listarDashboards = async (req, res) => {
             .eq("user_id", userId)
             .order("created_at", { ascending: false });
 
-        if (error) throw error;
+        // Si las tablas aún no existen en Supabase (PGRST205), devolver lista vacía
+        // sin romper la UI — ocurre en instancias nuevas antes del primer dashboard
+        if (error) {
+            const esTablaNula =
+                error.code === "PGRST205" ||
+                (error.message && error.message.includes("Could not find the table"));
+
+            if (esTablaNula) {
+                console.warn("listarDashboards: tabla 'dashboards' no existe aún en Supabase. Devolviendo lista vacía.");
+                return res.status(200).json({ ok: true, data: [] });
+            }
+            throw error;
+        }
 
         // Ordenar las tablas de cada dashboard por su campo orden
         const resultado = (dashboards || []).map(d => ({
